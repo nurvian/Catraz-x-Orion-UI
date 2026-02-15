@@ -823,6 +823,7 @@ function OrionLib:MakeWindow(WindowConfig)
 	}), "Second")
 
     -- [[ 1. SIAPKAN ELEMEN HEADER ]] --
+    WindowConfig.Name = WindowConfig.Name or "Orion Library"
     WindowConfig.Version = WindowConfig.Version or "v1.0.0"
     WindowConfig.Subtext = WindowConfig.Subtext or "Premium Script Hub"
     
@@ -832,9 +833,7 @@ function OrionLib:MakeWindow(WindowConfig)
         Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, -12),
         Font = Enum.Font.GothamBlack,
         Name = "Title",
-        Text = WindowConfig.Name, -- Pastikan teks terisi
-        TextColor3 = Color3.fromRGB(255, 255, 255), -- Paksa warna putih
-        ZIndex = 15, -- Pastikan di atas TopBar
+        ZIndex = 20, -- Naikkan ZIndex
         AutomaticSize = Enum.AutomaticSize.X
     }), "Text")
 
@@ -887,8 +886,6 @@ function OrionLib:MakeWindow(WindowConfig)
             Size = UDim2.new(1, 0, 0, 50),
             Name = "TopBar"
         }), {
-            WindowName, -- Masukkan judul
-            WindowSubtext, -- Masukkan subtext
             WindowTopBarLine,
             AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 7), {
                 Size = UDim2.new(0, 70, 0, 30),
@@ -921,7 +918,12 @@ function OrionLib:MakeWindow(WindowConfig)
     }), "Main")
 	
     -- [[ 3. PASANG PARENT & LOGIKA SETELAH WINDOW JADI ]] --
+    WindowName.Parent = MainWindow.TopBar
+    WindowSubtext.Parent = MainWindow.TopBar
     VersionTag.Parent = MainWindow.TopBar -- Sekarang MainWindow sudah tidak nil
+
+    WindowName.Text = WindowConfig.Name
+    WindowSubtext.Text = WindowConfig.Subtext
 
     if WindowConfig.ShowIcon then
         local WindowIcon = SetProps(MakeElement("Image", WindowConfig.Icon), {
@@ -934,10 +936,9 @@ function OrionLib:MakeWindow(WindowConfig)
         })
     end
 
-    -- Update posisi Tag secara dinamis
+    -- NEW Update posisi Tag secara dinamis
     task.spawn(function()
         while MainWindow and MainWindow.Parent do
-            -- Hitung posisi di sebelah kanan Judul
             local TitleX = WindowName.AbsolutePosition.X - MainWindow.AbsolutePosition.X
             VersionTag.Position = UDim2.new(0, TitleX + WindowName.AbsoluteSize.X + 8, 0.5, -10)
             task.wait(0.2)
