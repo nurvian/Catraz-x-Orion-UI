@@ -425,14 +425,14 @@ local NotificationHolder = SetProps(SetChildren(MakeElement("TFrame"), {
 	Parent = Orion
 })
 
--- GANTI SELURUH FUNCTION OrionLib:MakeNotification DENGAN INI:
+-- NEW GANTI SELURUH FUNCTION OrionLib:MakeNotification DENGAN INI:
 
 function OrionLib:MakeNotification(NotificationConfig)
 	spawn(function()
 		NotificationConfig.Name = NotificationConfig.Name or "Notification"
 		NotificationConfig.Content = NotificationConfig.Content or "Test"
 		NotificationConfig.Image = NotificationConfig.Image or "rbxassetid://4384403532"
-		NotificationConfig.Time = NotificationConfig.Time or 5 -- Default 5 detik
+		NotificationConfig.Time = NotificationConfig.Time or 5 
 
 		local NotificationParent = SetProps(MakeElement("TFrame"), {
 			Size = UDim2.new(1, 0, 0, 0),
@@ -440,28 +440,26 @@ function OrionLib:MakeNotification(NotificationConfig)
 			Parent = NotificationHolder
 		})
 
-		-- 1. FRAME UTAMA (Modern Style)
-		-- HAPUS SetChildren DI SINI, karena bikin error foreach string
+		-- 1. FRAME UTAMA
 		local NotificationFrame = AddThemeObject(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 8), {
 			Parent = NotificationParent, 
 			Size = UDim2.new(1, 0, 0, 0),
 			Position = UDim2.new(1, -55, 0, 0),
-			BackgroundTransparency = 0.1, -- Sedikit transparan (Glass effect)
+			BackgroundTransparency = 0.1, 
 			AutomaticSize = Enum.AutomaticSize.Y,
-            ClipsDescendants = false -- Biar shadow/glow kelihatan
+			ClipsDescendants = false 
 		}), "Second")
-        
-        -- 2. OUTLINE (UIStroke) - IKUT TEMA!
-        -- Ini kuncinya: AddThemeObject tipe "Stroke"
-        local Outline = AddThemeObject(MakeElement("Stroke", Color3.fromRGB(255, 255, 255), 1.5), "Stroke")
-        Outline.Parent = NotificationFrame
-        Outline.Transparency = 0
+		
+		-- 2. OUTLINE
+		local Outline = AddThemeObject(MakeElement("Stroke", Color3.fromRGB(255, 255, 255), 1.5), "Stroke")
+		Outline.Parent = NotificationFrame
+		Outline.Transparency = 0
 
-		-- 3. DROP SHADOW (Opsional, biar pop-up)
+		-- 3. DROP SHADOW
 		local Shadow = Create("ImageLabel", {
 			Parent = NotificationFrame,
 			BackgroundTransparency = 1,
-			Image = "rbxassetid://5554236805", -- Shadow image
+			Image = "rbxassetid://5554236805", 
 			ImageColor3 = Color3.fromRGB(0,0,0),
 			ImageTransparency = 0.5,
 			Size = UDim2.new(1, 20, 1, 20),
@@ -471,64 +469,62 @@ function OrionLib:MakeNotification(NotificationConfig)
             SliceCenter = Rect.new(23,23,277,277)
 		})
 
-        -- 4. ISI KONTEN
-		SetChildren(NotificationFrame, {
-			MakeElement("Padding", 12, 12, 12, 12),
-            
-            -- Icon (Lebih besar dikit)
-			SetProps(MakeElement("Image", NotificationConfig.Image), {
-				Size = UDim2.new(0, 24, 0, 24),
-				ImageColor3 = Color3.fromRGB(240, 240, 240),
-				Name = "Icon",
-                Position = UDim2.new(0, 0, 0, 2)
-			}),
-            
-            -- Judul
-			AddThemeObject(SetProps(MakeElement("Label", NotificationConfig.Name, 16), {
-				Size = UDim2.new(1, -35, 0, 20),
-				Position = UDim2.new(0, 32, 0, 2), -- Geser kanan biar gak nabrak icon
-				Font = Enum.Font.GothamBold,
-				Name = "Title",
-                TextXAlignment = Enum.TextXAlignment.Left
-			}), "Text"),
-            
-            -- Deskripsi
-			AddThemeObject(SetProps(MakeElement("Label", NotificationConfig.Content, 14), {
-				Size = UDim2.new(1, 0, 0, 0),
-				Position = UDim2.new(0, 0, 0, 32),
-				Font = Enum.Font.GothamMedium,
-				Name = "Content",
-				AutomaticSize = Enum.AutomaticSize.Y,
-				TextColor3 = Color3.fromRGB(200, 200, 200),
-				TextWrapped = true,
-                TextTransparency = 0.3
-			}), "TextDark")
+		-- 4. DEFINISI ELEMENT (Disimpan ke variabel biar gak error "Not a valid member")
+		local NotifPadding = MakeElement("Padding", 12, 12, 12, 12)
+		
+		local NotifIcon = SetProps(MakeElement("Image", NotificationConfig.Image), {
+			Size = UDim2.new(0, 24, 0, 24),
+			ImageColor3 = Color3.fromRGB(240, 240, 240),
+			Name = "Icon",
+			Position = UDim2.new(0, 0, 0, 2)
 		})
 
-		-- ANIMASI MASUK (Slide In)
+		local NotifTitle = AddThemeObject(SetProps(MakeElement("Label", NotificationConfig.Name, 16), {
+			Size = UDim2.new(1, -35, 0, 20),
+			Position = UDim2.new(0, 32, 0, 2),
+			Font = Enum.Font.GothamBold,
+			Name = "Title",
+			TextXAlignment = Enum.TextXAlignment.Left
+		}), "Text")
+
+		local NotifContent = AddThemeObject(SetProps(MakeElement("Label", NotificationConfig.Content, 14), {
+			Size = UDim2.new(1, 0, 0, 0),
+			Position = UDim2.new(0, 0, 0, 32),
+			Font = Enum.Font.GothamMedium,
+			Name = "Content",
+			AutomaticSize = Enum.AutomaticSize.Y,
+			TextColor3 = Color3.fromRGB(200, 200, 200),
+			TextWrapped = true,
+			TextTransparency = 0.3
+		}), "TextDark")
+
+		-- Masukkan semua element ke dalam Frame
+		SetChildren(NotificationFrame, {
+			NotifPadding,
+			NotifIcon,
+			NotifTitle,
+			NotifContent
+		})
+
+		-- 5. ANIMASI (Pake variabel lokal tadi)
 		TweenService:Create(NotificationFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
-        -- TUNGGU...
 		wait(NotificationConfig.Time - 0.88)
 
-        -- ANIMASI KELUAR (Fade Out + Slide Out)
-        -- Kita animasikan Outline, Background, Text, dan Icon biar smooth hilangnya
-		TweenService:Create(NotificationFrame.Icon, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {ImageTransparency = 1}):Play()
+		-- Animasi Keluar
+		TweenService:Create(NotifIcon, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {ImageTransparency = 1}):Play()
 		TweenService:Create(NotificationFrame, TweenInfo.new(0.8, Enum.EasingStyle.Quint), {BackgroundTransparency = 1}):Play()
-        TweenService:Create(Shadow, TweenInfo.new(0.8, Enum.EasingStyle.Quint), {ImageTransparency = 1}):Play()
-        
-        -- Animasi Outline hilang (Penting!)
-        TweenService:Create(Outline, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {Transparency = 1}):Play()
-        
-		TweenService:Create(NotificationFrame.Title, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 1}):Play()
-		TweenService:Create(NotificationFrame.Content, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 1}):Play()
+		TweenService:Create(Shadow, TweenInfo.new(0.8, Enum.EasingStyle.Quint), {ImageTransparency = 1}):Play()
+		TweenService:Create(Outline, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {Transparency = 1}):Play()
+		TweenService:Create(NotifTitle, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 1}):Play()
+		TweenService:Create(NotifContent, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 1}):Play()
 		
-        wait(0.2)
+		wait(0.2)
 		NotificationFrame:TweenPosition(UDim2.new(1.2, 0, 0, 0),'In','Quint',0.8,true)
 		
-        wait(1)
+		wait(1)
 		NotificationFrame:Destroy()
-        NotificationParent:Destroy()
+		NotificationParent:Destroy()
 	end)
 end
 
