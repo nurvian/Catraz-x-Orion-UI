@@ -441,15 +441,15 @@ function OrionLib:MakeNotification(NotificationConfig)
 		})
 
 		-- 1. FRAME UTAMA (Modern Style)
-		-- Menggunakan "Second" theme color (bukan hitam pekat) biar elegan
-		local NotificationFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 8), {
+		-- HAPUS SetChildren DI SINI, karena bikin error foreach string
+		local NotificationFrame = AddThemeObject(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 8), {
 			Parent = NotificationParent, 
 			Size = UDim2.new(1, 0, 0, 0),
 			Position = UDim2.new(1, -55, 0, 0),
 			BackgroundTransparency = 0.1, -- Sedikit transparan (Glass effect)
 			AutomaticSize = Enum.AutomaticSize.Y,
             ClipsDescendants = false -- Biar shadow/glow kelihatan
-		}), "Second"))
+		}), "Second")
         
         -- 2. OUTLINE (UIStroke) - IKUT TEMA!
         -- Ini kuncinya: AddThemeObject tipe "Stroke"
@@ -1765,6 +1765,7 @@ function OrionLib:MakeWindow(WindowConfig)
 			end  
 			return ElementFunction   
 		end	
+        
 
 		local ElementFunction = {}
 
@@ -1838,9 +1839,14 @@ function OrionLib:MakeWindow(WindowConfig)
 			return SectionFunction
 		end
 
+        -- [[ PERBAIKAN DI SINI ]] --
+		-- Kita panggil dulu GetElements-nya buat dapetin isinya
+		local TabFunctions = GetElements(Container)
+
 		if TabConfig.PremiumOnly then
-			for i, v in next, ElementFunction do
-				ElementFunction[i] = function() end
+			-- Kalau premium, kita kosongin fungsinya biar gak bisa dipake
+			for i, v in next, TabFunctions do
+				TabFunctions[i] = function() end
 			end    
 			Container:FindFirstChild("UIListLayout"):Destroy()
 			Container:FindFirstChild("UIPadding"):Destroy()
@@ -1867,7 +1873,7 @@ function OrionLib:MakeWindow(WindowConfig)
 					Position = UDim2.new(0, 150, 0, 112),
 					Font = Enum.Font.GothamBold
 				}), "Text"),
-				AddThemeObject(SetProps(MakeElement("Label", "This part of the script is locked to Catraz Premium users. Purchase Premium in the Discord server (discord.gg/catrazhub)", 12), {
+				AddThemeObject(SetProps(MakeElement("Label", "Locked Feature", 12), {
 					Size = UDim2.new(1, -200, 0, 14),
 					Position = UDim2.new(0, 150, 0, 138),
 					TextWrapped = true,
@@ -1875,8 +1881,9 @@ function OrionLib:MakeWindow(WindowConfig)
 				}), "Text")
 			})
 		end
-		return ElementFunction   
-	end  
+		
+		return TabFunctions -- Return variabel yang sudah kita isi tadi
+	end
 	
 	--if writefile and isfile then
 	--	if not isfile("NewLibraryNotification1.txt") then
