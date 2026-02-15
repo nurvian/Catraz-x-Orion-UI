@@ -829,22 +829,23 @@ function OrionLib:MakeWindow(WindowConfig)
     
     -- Judul Utama dengan Force Text
     local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Name, 18), {
-        Size = UDim2.new(0, 0, 0, 20),
-        Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, -12),
+        Size = UDim2.new(0, 0, 0, 25), -- Tinggi teks disesuaikan
+        -- Posisi 0.5 (tengah) dikurangi sedikit offset agar pas dengan mata
+        Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, -14), 
         Font = Enum.Font.GothamBlack,
+        Text = WindowConfig.Name, -- Memaksa teks "Catraz Hub" muncul
         Name = "Title",
-        ZIndex = 20, -- Naikkan ZIndex
+        ZIndex = 30, -- Pastikan paling depan
         AutomaticSize = Enum.AutomaticSize.X
     }), "Text")
-
     -- Subtext dengan Force Text
     local WindowSubtext = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Subtext, 11), {
         Size = UDim2.new(0, 0, 0, 15),
-        Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, 6),
+        Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, 6), -- Di bawah judul
         Font = Enum.Font.GothamSemibold,
+        Text = WindowConfig.Subtext,
         Name = "Subtext",
-        Text = WindowConfig.Subtext, -- Pastikan teks terisi
-        ZIndex = 15,
+        ZIndex = 30,
         AutomaticSize = Enum.AutomaticSize.X
     }), "TextDark")
 
