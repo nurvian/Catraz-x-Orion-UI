@@ -1620,7 +1620,7 @@ function OrionLib:MakeWindow(WindowConfig)
 						MakeElement("List", 0, 6)
 					}),
 				})
-				local FoldBtn = SetProps(MakeElement("ImageButton", "rbxassetid://3944690667"), { 
+				local FoldBtn = SetProps(MakeElement("ImageButton", "rbxassetid://92473583511724"), { 
 					Parent = SectionFrame,
 					Size = UDim2.new(0, 20, 0, 20),
 					Position = UDim2.new(1, -25, 0, 3), 
