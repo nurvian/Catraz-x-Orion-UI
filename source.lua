@@ -822,25 +822,29 @@ function OrionLib:MakeWindow(WindowConfig)
 			}), "Text")
 		})
 
-        -- LOGIKA ICON YANG AMAN (ANTI CRASH)
-		local TabIconData = GetIcon(TabConfig.Icon) -- Panggil fungsi GetIcon baru di atas
+       -- [[ LOGIKA ICON BARU (ANTI CRASH) ]] --
 		
-		if TabIconData then
-			-- Kalo icon ketemu di Library (contoh: Icon = "Home")
+		-- 1. Coba cari icon di library (Lucide)
+		local TabIconData = GetIcon(TabConfig.Icon)
+		
+		if TabIconData ~= nil then
+			-- Jika ketemu di Library
 			TabFrame.Ico.Image = TabIconData.Image
 			TabFrame.Ico.ImageRectSize = TabIconData.ImageRectSize
 			TabFrame.Ico.ImageRectOffset = TabIconData.ImageRectPosition
 			TabFrame.Ico.ScaleType = Enum.ScaleType.Stretch
 		else
-			-- Kalo icon manual (rbxassetid://...) atau GAK ADA icon
-			if TabConfig.Icon and TabConfig.Icon ~= "" then
-                -- Cek apakah user masukin ID manual?
-				TabFrame.Ico.Image = TabConfig.Icon 
-				TabFrame.Ico.ScaleType = Enum.ScaleType.Fit
+			-- Jika TIDAK ketemu (return nil), kita cek manual
+			if TabConfig.Icon and string.find(tostring(TabConfig.Icon), "rbxassetid://") then
+				-- Kalau user masukin ID Roblox manual
+				TabFrame.Ico.Image = TabConfig.Icon
 				TabFrame.Ico.ImageRectSize = Vector2.new(0,0)
 				TabFrame.Ico.ImageRectOffset = Vector2.new(0,0)
+				TabFrame.Ico.ScaleType = Enum.ScaleType.Fit
 			else
-                -- INI PENYELAMATNYA: Kalo kosong, isi string kosong biar gak error
+				-- FALBACK TERAKHIR (PENTING!)
+				-- Kalau icon gak ketemu & bukan ID, kita kosongin stringnya.
+				-- Jangan biarkan nil, karena bakal error "ContentId expected, got nil"
 				TabFrame.Ico.Image = "" 
 			end
 		end
