@@ -827,22 +827,24 @@ function OrionLib:MakeWindow(WindowConfig)
     WindowConfig.Version = WindowConfig.Version or "v1.0.0"
     WindowConfig.Subtext = WindowConfig.Subtext or "Premium Script Hub"
     
-    -- [[ 1. SIAPKAN WINDOW NAME ]] --
+    -- [[ 1. ADJUST WINDOW NAME (NAIKKAN) ]] --
     local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Name, 18), {
-        AnchorPoint = Vector2.new(0, 0.5), -- Titik pusat di tengah vertikal
-        Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, 0), -- Posisikan di tengah TopBar
+        AnchorPoint = Vector2.new(0, 0.5), 
+        -- Ubah angka 0 menjadi -10 untuk menaikkan judul
+        Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, -10), 
         Size = UDim2.new(0, 0, 0, 30),
         Font = Enum.Font.GothamBlack,
         Text = WindowConfig.Name,
         Name = "Title",
-        ZIndex = 50, -- Pastikan di atas background
+        ZIndex = 50,
         AutomaticSize = Enum.AutomaticSize.X
     }), "Text")
 
-    -- [[ 2. SIAPKAN SUBTEXT ]] --
+    -- [[ 2. ADJUST SUBTEXT (NAIKKAN) ]] --
     local WindowSubtext = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Subtext, 11), {
         AnchorPoint = Vector2.new(0, 0.5),
-        Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, 15), -- Di bawah Judul
+        -- Ubah angka 15 menjadi 5 agar subtext ikut naik mendekati judul
+        Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, 5), 
         Size = UDim2.new(0, 0, 0, 15),
         Font = Enum.Font.GothamSemibold,
         Text = WindowConfig.Subtext,
@@ -940,15 +942,16 @@ function OrionLib:MakeWindow(WindowConfig)
         })
     end
 
-    -- NEW Update posisi Tag secara dinamis
+    -- Update posisi Tag secara dinamis
     task.spawn(function()
         while MainWindow and MainWindow.Parent do
             local TitleX = WindowName.AbsolutePosition.X - MainWindow.AbsolutePosition.X
+            -- Gunakan -10 agar sejajar dengan posisi WindowName yang baru
             VersionTag.Position = UDim2.new(0, TitleX + WindowName.AbsoluteSize.X + 8, 0.5, -10)
             task.wait(0.2)
         end
     end)
-
+    
     -- [[ RESIZE & DRAG ]]
     if MainWindow:FindFirstChild("ResizeHandle") then
         MakeResizable(MainWindow.ResizeHandle, MainWindow)
