@@ -822,41 +822,52 @@ function OrionLib:MakeWindow(WindowConfig)
 		}),
 	}), "Second")
 
-    -- [[ 1. SIAPKAN ELEMEN HEADER (TANPA PARENT DULU) ]] --
+    -- [[ 1. SIAPKAN ELEMEN HEADER ]] --
     WindowConfig.Version = WindowConfig.Version or "v1.0.0"
     WindowConfig.Subtext = WindowConfig.Subtext or "Premium Script Hub"
-    WindowConfig.TagColor = WindowConfig.TagColor or OrionLib.Themes[OrionLib.SelectedTheme].Stroke
-
+    
+    -- Judul Utama dengan Force Text
     local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Name, 18), {
         Size = UDim2.new(0, 0, 0, 20),
         Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, -12),
         Font = Enum.Font.GothamBlack,
         Name = "Title",
+        Text = WindowConfig.Name, -- Pastikan teks terisi
+        TextColor3 = Color3.fromRGB(255, 255, 255), -- Paksa warna putih
+        ZIndex = 15, -- Pastikan di atas TopBar
         AutomaticSize = Enum.AutomaticSize.X
     }), "Text")
 
+    -- Subtext dengan Force Text
     local WindowSubtext = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Subtext, 11), {
         Size = UDim2.new(0, 0, 0, 15),
         Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, 6),
         Font = Enum.Font.GothamSemibold,
         Name = "Subtext",
+        Text = WindowConfig.Subtext, -- Pastikan teks terisi
+        ZIndex = 15,
         AutomaticSize = Enum.AutomaticSize.X
     }), "TextDark")
 
-    local VersionTag = SetChildren(SetProps(MakeElement("RoundFrame", WindowConfig.TagColor, 0, 4), {
+    -- Version Tag dengan Label Terpisah agar tidak Bug
+    local VersionTag = AddThemeObject(SetProps(MakeElement("RoundFrame", WindowConfig.TagColor, 0, 4), {
         Size = UDim2.new(0, 0, 0, 16),
         Name = "VersionTag",
         AutomaticSize = Enum.AutomaticSize.X,
-        ZIndex = 10
-    }), {
-        MakeElement("Padding", 0, 6, 6, 0),
-        SetProps(MakeElement("Label", WindowConfig.Version, 10), {
-            Size = UDim2.new(1, 0, 1, 0),
-            TextXAlignment = Enum.TextXAlignment.Center,
-            Font = Enum.Font.GothamBold,
-            TextColor3 = Color3.fromRGB(255, 255, 255)
-        })
+        ZIndex = 15
+    }), "Stroke")
+
+    local VersionLabel = SetProps(MakeElement("Label", WindowConfig.Version, 10), {
+        Parent = VersionTag,
+        Size = UDim2.new(1, 0, 1, 0),
+        Text = WindowConfig.Version, -- Force teks versi
+        TextXAlignment = Enum.TextXAlignment.Center,
+        Font = Enum.Font.GothamBold,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        ZIndex = 16
     })
+    
+    MakeElement("Padding", 0, 6, 6, 0).Parent = VersionTag -- Kasih jarak
 
 	local WindowTopBarLine = AddThemeObject(SetProps(MakeElement("Frame"), {
 		Size = UDim2.new(1, 0, 0, 1),
@@ -926,8 +937,9 @@ function OrionLib:MakeWindow(WindowConfig)
     -- Update posisi Tag secara dinamis
     task.spawn(function()
         while MainWindow and MainWindow.Parent do
-            local TitlePos = WindowName.AbsolutePosition.X - MainWindow.AbsolutePosition.X
-            VersionTag.Position = UDim2.new(0, TitlePos + WindowName.AbsoluteSize.X + 8, 0.5, -10)
+            -- Hitung posisi di sebelah kanan Judul
+            local TitleX = WindowName.AbsolutePosition.X - MainWindow.AbsolutePosition.X
+            VersionTag.Position = UDim2.new(0, TitleX + WindowName.AbsoluteSize.X + 8, 0.5, -10)
             task.wait(0.2)
         end
     end)
