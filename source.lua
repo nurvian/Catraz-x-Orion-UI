@@ -2160,7 +2160,7 @@ function OrionLib:MakeWindow(WindowConfig)
                 end
             })
 
-            -- SECTION 2: LOAD & DELETE
+            -- SECTION 2: LOAD & MANAGE
             local LoadSection = ConfigTab:AddSection({ Name = "Load & Manage" })
 
             local LoadDropdown = LoadSection:AddDropdown({
@@ -2175,7 +2175,9 @@ function OrionLib:MakeWindow(WindowConfig)
                     if SelectedConfig then
                         local Path = OrionLib.Folder .. "/" .. SelectedConfig .. ".txt"
                         if isfile(Path) then
-                            LoadCfg(readfile(Path))
+                            -- FIX: LoadCfg butuh isi filenya
+                            local Content = readfile(Path)
+                            LoadCfg(Content) 
                             OrionLib:MakeNotification({ Name = "Success", Content = "Config '"..SelectedConfig.."' Loaded!", Time = 3 })
                         end
                     end
@@ -2188,7 +2190,7 @@ function OrionLib:MakeWindow(WindowConfig)
                     if SelectedConfig then
                         local Path = OrionLib.Folder .. "/" .. SelectedConfig .. ".txt"
                         if isfile(Path) then
-                            delfile(Path)
+                            delfile(Path) -- Menghapus file
                             ConfigTab:RefreshAllDropdowns()
                             OrionLib:MakeNotification({ Name = "Deleted", Content = "File removed.", Time = 3 })
                         end
@@ -2196,7 +2198,7 @@ function OrionLib:MakeWindow(WindowConfig)
                 end
             })
 
-            -- SECTION 3: EXPORT & IMPORT (Cloud System)
+            -- SECTION 3: CLOUD SHARE
             local CloudSection = ConfigTab:AddSection({ Name = "Cloud Share" })
 
             CloudSection:AddButton({
@@ -2205,22 +2207,23 @@ function OrionLib:MakeWindow(WindowConfig)
                     if SelectedConfig then
                         local Path = OrionLib.Folder .. "/" .. SelectedConfig .. ".txt"
                         if isfile(Path) then
+                            -- FIX: setclipboard untuk ekspor
                             setclipboard(readfile(Path))
-                            OrionLib:MakeNotification({ Name = "Export", Content = "JSON Config copied to clipboard!", Time = 3 })
+                            OrionLib:MakeNotification({ Name = "Export", Content = "JSON copied to clipboard!", Time = 3 })
                         end
                     end
                 end
             })
 
             CloudSection:AddTextbox({
-                Name = "Import Raw URL (Pastebin/GitHub)",
+                Name = "Import Raw URL",
                 Placeholder = "https://...",
                 Callback = function(V) ImportURL = V end
             })
 
             CloudSection:AddTextbox({
-                Name = "Save Imported As...",
-                Placeholder = "FriendConfig",
+                Name = "Save As...",
+                Placeholder = "NewConfig",
                 Callback = function(V) ImportFileName = V end
             })
 
@@ -2229,17 +2232,16 @@ function OrionLib:MakeWindow(WindowConfig)
                 Callback = function()
                     if ImportURL ~= "" and ImportFileName ~= "" then
                         local Success, Response = pcall(function() return game:HttpGet(ImportURL) end)
-                        if Success and Response:sub(1,1) == "{" then
+                        if Success and Response then
                             writefile(OrionLib.Folder .. "/" .. ImportFileName .. ".txt", Response)
                             ConfigTab:RefreshAllDropdowns()
                             OrionLib:MakeNotification({ Name = "Success", Content = "Config Downloaded!", Time = 3 })
                         else
-                            OrionLib:MakeNotification({ Name = "Error", Content = "Invalid URL or Data!", Time = 3 })
+                            OrionLib:MakeNotification({ Name = "Error", Content = "Download Failed!", Time = 3 })
                         end
                     end
                 end
             })
-
             -- SECTION 4: AUTO LOAD SETTINGS
             local AutoSection = ConfigTab:AddSection({ Name = "Startup Settings" })
 
@@ -2263,7 +2265,7 @@ function OrionLib:MakeWindow(WindowConfig)
                 end
             })
 
-            -- Fungsi Internal untuk Refresh Dropdown
+            -- FUNGSI INTERNAL: Refresh Dropdown
             function ConfigTab:RefreshAllDropdowns()
                 local NewList = GetConfigList()
                 LoadDropdown:Refresh(NewList, true)
