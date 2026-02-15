@@ -855,24 +855,27 @@ function OrionLib:MakeWindow(WindowConfig)
         AutomaticSize = Enum.AutomaticSize.X
     }), "TextDark")
 
+    -- NEW Version Tag dengan Label Terpisah agar tidak Bug
     local VersionTag = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", WindowConfig.TagColor, 0, 4), {
-        Size = UDim2.new(0, 0, 0, 18),
+        Size = UDim2.new(0, 0, 0, 18), -- Tinggi dinaikkan dikit jadi 18 (sebelumnya 16) agar pas
         Name = "VersionTag",
-        AutomaticSize = Enum.AutomaticSize.XY,
+        AutomaticSize = Enum.AutomaticSize.XY, -- Biar lebar otomatis sesuai isi
         ZIndex = 40
     }), {
-        MakeElement("Padding", 0, 6, 6, 0),
-        SetProps(MakeElement("List", 0, 4), {
+        MakeElement("Padding", 0, 6, 6, 0), -- Jarak di dalam tag
+        SetProps(MakeElement("List", 0, 4), { -- Menyusun icon dan teks ke samping
             FillDirection = Enum.FillDirection.Horizontal,
             VerticalAlignment = Enum.VerticalAlignment.Center,
             SortOrder = Enum.SortOrder.LayoutOrder
         }),
+        -- Ikon Lucide di depan
         SetProps(MakeElement("Image", WindowConfig.VersionIcon), {
             Size = UDim2.new(0, 12, 0, 12),
             Name = "VIcon",
             ImageColor3 = Color3.fromRGB(255, 255, 255),
             ZIndex = 41
         }),
+        -- Teks Versi
         SetProps(MakeElement("Label", WindowConfig.Version, 10), {
             Size = UDim2.new(0, 0, 0, 12),
             AutomaticSize = Enum.AutomaticSize.X,
@@ -947,8 +950,8 @@ function OrionLib:MakeWindow(WindowConfig)
     -- [[ 3. PASANG PARENT & LOGIKA SETELAH WINDOW JADI ]] --
     WindowName.Parent = MainWindow.TopBar
     WindowSubtext.Parent = MainWindow.TopBar
-    VersionTag.Parent = MainWindow.TopBar
-    VersionTag.BackgroundColor3 = WindowConfig.TagColor -- Sekarang MainWindow sudah tidak nil
+    VersionTag.Parent = MainWindow.TopBar -- Sekarang MainWindow sudah tidak nil
+    VersionTag.BackgroundColor3 = WindowConfig.TagColor
 
     WindowName.Text = WindowConfig.Name
     WindowSubtext.Text = WindowConfig.Subtext
