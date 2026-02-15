@@ -796,8 +796,10 @@ function OrionLib:MakeWindow(WindowConfig)
     -- [[ 1. SET DEFAULT & CHANGEABLE ICON ]] --
     WindowConfig.ToggleIcon = WindowConfig.ToggleIcon or "rbxassetid://105921924721005"
 
+    -- [[ SOURCE.LUA - UPDATE FLOATING TOGGLE ]] --
+
     local FloatingToggle = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 100), {
-        Size = UDim2.new(0, 0, 0, 0), -- Mulai dari 0 untuk animasi muncul
+        Size = UDim2.new(0, 0, 0, 0), -- Tetap 0 untuk animasi masuk
         Position = UDim2.new(0.1, 0, 0.5, 0),
         Parent = Orion,
         Visible = false,
@@ -806,20 +808,21 @@ function OrionLib:MakeWindow(WindowConfig)
         Active = true,
         AnchorPoint = Vector2.new(0.5, 0.5)
     }), {
-        -- Outline yang tetap mengikuti tema
+        -- Outline tetap ikut tema
         AddThemeObject(MakeElement("Stroke", nil, 2), "Stroke"),
         
-        -- Icon Utama (Hanya Gambar, Tanpa Glow/Kondimen)
+        -- Icon Utama: Ukuran diperbesar ke 45x45 agar penuh di frame 50x50
         SetProps(MakeElement("Image", WindowConfig.ToggleIcon), {
-            Size = UDim2.new(0, 30, 0, 30),
+            Size = UDim2.new(0, 45, 0, 45), -- Diperbesar dari 30 ke 45
             Position = UDim2.new(0.5, 0, 0.5, 0),
             AnchorPoint = Vector2.new(0.5, 0.5),
             ImageColor3 = Color3.fromRGB(255, 255, 255),
+            ScaleType = Enum.ScaleType.Fit, -- Memastikan gambar tidak gepeng
             Name = "Icon",
             ZIndex = 101
         }),
         
-        -- Tombol Klik
+        -- Tombol Klik: Kita jadikan ini sebagai titik Drag
         SetProps(MakeElement("Button"), {
             Size = UDim2.new(1, 0, 1, 0),
             Name = "ToggleBtn",
@@ -827,7 +830,9 @@ function OrionLib:MakeWindow(WindowConfig)
         })
     }), "Second")
 
-    MakeDraggable(FloatingToggle, FloatingToggle)
+    -- [[ PERBAIKAN DRAG ]] --
+    -- Kita gunakan ToggleBtn sebagai 'DragPoint' karena dia yang menerima input klik
+    MakeDraggable(FloatingToggle.ToggleBtn, FloatingToggle)
 
     -- [[ 2. FUNGSI UNTUK GANTI IMAGE TOGEL SECARA DINAMIS ]] --
     function OrionLib:ChangeToggleIcon(NewIconID)
