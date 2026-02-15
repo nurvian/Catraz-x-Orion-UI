@@ -435,6 +435,9 @@ function OrionLib:MakeNotification(NotificationConfig)
 		NotificationConfig.Content = NotificationConfig.Content or "Test"
 		NotificationConfig.Image = NotificationConfig.Image or ""
 		NotificationConfig.Time = NotificationConfig.Time or 5 
+        -- Properti baru untuk Background Image di Notifikasi
+		NotificationConfig.ImageBackground = NotificationConfig.ImageBackground or nil
+		NotificationConfig.ImageTransparency = NotificationConfig.ImageTransparency or 0.8
 
 		local NotificationParent = SetProps(MakeElement("TFrame"), {
 			Size = UDim2.new(1, 0, 0, 0),
@@ -451,6 +454,25 @@ function OrionLib:MakeNotification(NotificationConfig)
 			AutomaticSize = Enum.AutomaticSize.Y,
 			ClipsDescendants = false 
 		}), "Second")
+
+        -- [[ FITUR BARU: BACKGROUND IMAGE NOTIFIKASI ]]
+		if NotificationConfig.ImageBackground then
+			local NotifBG = Create("ImageLabel", {
+				Name = "NotifBackground",
+				Parent = NotificationFrame,
+				BackgroundTransparency = 1,
+				Image = NotificationConfig.ImageBackground,
+				ImageTransparency = NotificationConfig.ImageTransparency,
+				Size = UDim2.new(1, 0, 1, 0),
+				Position = UDim2.new(0, 0, 0, 0),
+				ZIndex = 0, -- Di belakang teks
+				ScaleType = Enum.ScaleType.Stretch
+			})
+			Create("UICorner", {
+				CornerRadius = UDim.new(0, 8),
+				Parent = NotifBG
+			})
+		end
 		
 		-- 2. OUTLINE
 		local Outline = AddThemeObject(MakeElement("Stroke", Color3.fromRGB(255, 255, 255), 1.5), "Stroke")
@@ -521,6 +543,11 @@ function OrionLib:MakeNotification(NotificationConfig)
 		TweenService:Create(NotifTitle, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 1}):Play()
 		TweenService:Create(NotifContent, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 1}):Play()
 		
+        -- Animasi Background Image Keluar (Jika ada)
+		if NotificationFrame:FindFirstChild("NotifBackground") then
+			TweenService:Create(NotificationFrame.NotifBackground, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {ImageTransparency = 1}):Play()
+		end
+        
 		wait(0.2)
 		NotificationFrame:TweenPosition(UDim2.new(1.2, 0, 0, 0),'In','Quint',0.8,true)
 		
