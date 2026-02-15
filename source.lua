@@ -963,7 +963,7 @@ function OrionLib:MakeWindow(WindowConfig)
         while MainWindow and MainWindow.Parent do
             local TitleX = WindowName.AbsolutePosition.X - MainWindow.AbsolutePosition.X
             -- Ganti angka terakhir jadi -12 atau -14 untuk menaikkan tag
-            VersionTag.Position = UDim2.new(0, TitleX + WindowName.AbsoluteSize.X + 8, 0.5, -14) 
+            VersionTag.Position = UDim2.new(0, TitleX + WindowName.AbsoluteSize.X + 8, 0.5, -16) 
             task.wait(0.2)
         end
     end)
