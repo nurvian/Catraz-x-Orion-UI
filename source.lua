@@ -832,15 +832,26 @@ function OrionLib:MakeWindow(WindowConfig)
 		})
 
         -- KODE BARU:
-        local TabIconData = GetIcon(TabConfig.Icon)
-        if TabIconData then
-            TabFrame.Ico.Image = TabIconData.Image
-            TabFrame.Ico.ImageRectSize = TabIconData.ImageRectSize
-            TabFrame.Ico.ImageRectOffset = TabIconData.ImageRectPosition
-            TabFrame.Ico.ScaleType = Enum.ScaleType.Stretch
-        else
-            TabFrame.Ico.Image = TabConfig.Icon -- Fallback ke ID biasa
-        end
+        -- LOGIKA ICON BARU (ANTI ERROR)
+		local TabIconData = GetIcon(TabConfig.Icon) -- Cek di IconModule
+		
+		if TabIconData then
+			-- Jika Icon ditemukan di Library (Lucide/dll)
+			TabFrame.Ico.Image = TabIconData.Image
+			TabFrame.Ico.ImageRectSize = TabIconData.ImageRectSize
+			TabFrame.Ico.ImageRectOffset = TabIconData.ImageRectPosition
+			TabFrame.Ico.ScaleType = Enum.ScaleType.Stretch
+		else
+			-- Jika Icon manual (rbxassetid) atau Kosong
+			if TabConfig.Icon and TabConfig.Icon ~= "" then
+				TabFrame.Ico.Image = TabConfig.Icon -- Pakai ID manual
+				TabFrame.Ico.ScaleType = Enum.ScaleType.Fit -- Reset scale
+				TabFrame.Ico.ImageRectSize = Vector2.new(0,0) -- Reset sprite crop
+				TabFrame.Ico.ImageRectOffset = Vector2.new(0,0)
+			else
+				TabFrame.Ico.Image = "" -- <--- INI PENTING: Jangan biarkan nil, kasih string kosong
+			end
+		end
         
 		local Container = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255, 255, 255), 5), {
 			Size = UDim2.new(1, -150, 1, -50),
