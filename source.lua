@@ -822,12 +822,70 @@ function OrionLib:MakeWindow(WindowConfig)
 		}),
 	}), "Second")
 
-	local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Name, 14), {
-		Size = UDim2.new(1, -30, 2, 0),
-		Position = UDim2.new(0, 25, 0, -24),
-		Font = Enum.Font.GothamBlack,
-		TextSize = 20
-	}), "Text")
+	-- [[ 1. CONFIG TAMBAHAN UNTUK HEADER ]] --
+    WindowConfig.Version = WindowConfig.Version or "v1.0.0"
+    WindowConfig.Subtext = WindowConfig.Subtext or "Premium Script Hub"
+    WindowConfig.TagColor = WindowConfig.TagColor or OrionLib.Themes[OrionLib.SelectedTheme].Stroke -- Warna BG Tag
+
+    -- [[ 2. JUDUL UTAMA (WINDOW NAME) ]] --
+    local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Name, 18), {
+        Size = UDim2.new(0, 0, 0, 20),
+        Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, -12), -- Posisi dinamis jika ada ikon
+        Font = Enum.Font.GothamBlack,
+        Name = "Title",
+        AutomaticSize = Enum.AutomaticSize.X -- Lebar otomatis menyesuaikan teks
+    }), "Text")
+
+    -- [[ 3. SUBTEXT (DESKRIPSI DI BAWAH JUDUL) ]] --
+    local WindowSubtext = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Subtext, 11), {
+        Size = UDim2.new(0, 0, 0, 15),
+        Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, 6),
+        Font = Enum.Font.GothamSemibold,
+        Name = "Subtext",
+        AutomaticSize = Enum.AutomaticSize.X
+    }), "TextDark")
+
+    -- [[ 4. VERSION TAG (DENGAN BACKGROUND) ]] --
+    local VersionTag = SetChildren(SetProps(MakeElement("RoundFrame", WindowConfig.TagColor, 0, 4), {
+        Parent = MainWindow.TopBar,
+        Size = UDim2.new(0, 0, 0, 16),
+        Position = UDim2.new(0, 0, 0, 0), -- Akan diatur otomatis posisinya
+        Name = "VersionTag",
+        AutomaticSize = Enum.AutomaticSize.X,
+        ZIndex = 10
+    }), {
+        MakeElement("Padding", 0, 6, 6, 0), -- Kasih jarak kiri kanan di dalam tag
+        SetProps(MakeElement("Label", WindowConfig.Version, 10), {
+            Size = UDim2.new(1, 0, 1, 0),
+            TextXAlignment = Enum.TextXAlignment.Center,
+            Font = Enum.Font.GothamBold,
+            TextColor3 = Color3.fromRGB(255, 255, 255)
+        })
+    })
+
+    -- Logika nempelin Tag di sebelah kanan Judul
+    task.spawn(function()
+        while MainWindow and MainWindow.Parent do
+            VersionTag.Position = UDim2.new(0, WindowName.AbsolutePosition.X - MainWindow.AbsolutePosition.X + WindowName.AbsoluteSize.X + 8, 0.5, -10)
+            task.wait(0.1)
+        end
+    end)
+
+    -- [[ 5. HEADER ICON (GAMBAR DI KIRI) ]] --
+    if WindowConfig.ShowIcon then
+        local WindowIcon = SetProps(MakeElement("Image", WindowConfig.Icon), {
+            Parent = MainWindow.TopBar,
+            Size = UDim2.new(0, 24, 0, 24),
+            Position = UDim2.new(0, 20, 0.5, 0),
+            AnchorPoint = Vector2.new(0, 0.5),
+            Name = "HeaderIcon",
+            ZIndex = 10
+        })
+    end
+
+    -- Masukkan elemen ke TopBar
+    WindowName.Parent = MainWindow.TopBar
+    WindowSubtext.Parent = MainWindow.TopBar
 
 	local WindowTopBarLine = AddThemeObject(SetProps(MakeElement("Frame"), {
 		Size = UDim2.new(1, 0, 0, 1),
@@ -1978,61 +2036,78 @@ function OrionLib:MakeWindow(WindowConfig)
 				return Colorpicker
 			end  
 			
-			-- [[ INI AddSection YANG BENAR (DI DALAM GetElements) ]] --
-			function ElementFunction:AddSection(SectionConfig)
-				SectionConfig.Name = SectionConfig.Name or "Section"
-				local SectionCollapsed = false
-				local SectionFrame = SetChildren(SetProps(MakeElement("TFrame"), {
-					Size = UDim2.new(1, 0, 0, 26),
-					Parent = ItemParent, -- Pastikan parentnya ItemParent, bukan Container
-					ClipsDescendants = true 
-				}), {
-					AddThemeObject(SetProps(MakeElement("Label", SectionConfig.Name, 14), {
-						Size = UDim2.new(1, -30, 0, 26), 
-						Position = UDim2.new(0, 0, 0, 0), 
-						TextYAlignment = Enum.TextYAlignment.Center, 
-						Font = Enum.Font.GothamSemibold
-					}), "TextDark"),
-					SetChildren(SetProps(MakeElement("TFrame"), {
-						AnchorPoint = Vector2.new(0, 0),
-						Size = UDim2.new(1, 0, 1, -26),
-						Position = UDim2.new(0, 0, 0, 26),
-						Name = "Holder"
-					}), {
-						MakeElement("List", 0, 6)
-					}),
-				})
-				local FoldBtn = SetProps(MakeElement("ImageButton", "rbxassetid://92473583511724"), { 
-					Parent = SectionFrame,
-					Size = UDim2.new(0, 20, 0, 20),
-					Position = UDim2.new(1, -25, 0, 3), 
-					ImageColor3 = Color3.fromRGB(150, 150, 150),
-					BackgroundTransparency = 1
-				})
-				AddConnection(SectionFrame.Holder.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-					if not SectionCollapsed then
-						SectionFrame.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y + 31)
-						SectionFrame.Holder.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y)
-					end
-				end)
-				AddConnection(FoldBtn.MouseButton1Click, function()
-					SectionCollapsed = not SectionCollapsed
-					if SectionCollapsed then
-						TweenService:Create(FoldBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Rotation = -90}):Play() 
-						TweenService:Create(SectionFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Size = UDim2.new(1, 0, 0, 26)}):Play() 
-					else
-						TweenService:Create(FoldBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Rotation = 0}):Play()
-						TweenService:Create(SectionFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
-							Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y + 31)
-						}):Play()
-					end
-				end)
-				local SectionFunction = {}
-				for i, v in next, GetElements(SectionFrame.Holder) do
-					SectionFunction[i] = v 
-				end
-				return SectionFunction
-			end
+            -- [[ SOURCE.LUA - UPGRADED ADDSECTION ]] --
+
+            function ElementFunction:AddSection(SectionConfig)
+                SectionConfig.Name = SectionConfig.Name or "Section"
+                SectionConfig.TextSize = SectionConfig.TextSize or 17 -- Ukuran teks lebih gede
+                SectionConfig.Font = SectionConfig.Font or Enum.Font.GothamBold -- Font default lebih tebal
+                SectionConfig.Folded = SectionConfig.Folded or false -- Opsi awal tertutup
+
+                local SectionCollapsed = SectionConfig.Folded
+                
+                local SectionFrame = SetChildren(SetProps(MakeElement("TFrame"), {
+                    Size = UDim2.new(1, 0, 0, 26), -- Akan diatur ulang di bawah
+                    Parent = ItemParent,
+                    ClipsDescendants = true 
+                }), {
+                    AddThemeObject(SetProps(MakeElement("Label", SectionConfig.Name, SectionConfig.TextSize), {
+                        Size = UDim2.new(1, -30, 0, 26), 
+                        Position = UDim2.new(0, 0, 0, 0), 
+                        TextYAlignment = Enum.TextYAlignment.Center, 
+                        Font = SectionConfig.Font -- Menggunakan custom font
+                    }), "Text"),
+                    SetChildren(SetProps(MakeElement("TFrame"), {
+                        AnchorPoint = Vector2.new(0, 0),
+                        Size = UDim2.new(1, 0, 0, 0), -- Ukuran holder awal
+                        Position = UDim2.new(0, 0, 0, 28),
+                        Name = "Holder"
+                    }), {
+                        MakeElement("List", 0, 6)
+                    }),
+                })
+
+                local FoldBtn = SetProps(MakeElement("ImageButton", "rbxassetid://92473583511724"), { 
+                    Parent = SectionFrame,
+                    Size = UDim2.new(0, 20, 0, 20),
+                    Position = UDim2.new(1, -25, 0, 3), 
+                    ImageColor3 = Color3.fromRGB(150, 150, 150),
+                    BackgroundTransparency = 1,
+                    Rotation = SectionCollapsed and -90 or 0 -- Atur rotasi awal
+                })
+
+                -- Logika Update Ukuran Otomatis
+                AddConnection(SectionFrame.Holder.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+                    if not SectionCollapsed then
+                        SectionFrame.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y + 33)
+                        SectionFrame.Holder.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y)
+                    end
+                end)
+
+                -- Set Status Awal (Jika Folded = true)
+                if SectionCollapsed then
+                    SectionFrame.Size = UDim2.new(1, 0, 0, 26)
+                end
+
+                AddConnection(FoldBtn.MouseButton1Click, function()
+                    SectionCollapsed = not SectionCollapsed
+                    if SectionCollapsed then
+                        TweenService:Create(FoldBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Rotation = -90}):Play() 
+                        TweenService:Create(SectionFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Size = UDim2.new(1, 0, 0, 26)}):Play() 
+                    else
+                        TweenService:Create(FoldBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Rotation = 0}):Play()
+                        TweenService:Create(SectionFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
+                            Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y + 33)
+                        }):Play()
+                    end
+                end)
+
+                local SectionFunction = {}
+                for i, v in next, GetElements(SectionFrame.Holder) do
+                    SectionFunction[i] = v 
+                end
+                return SectionFunction
+            end
 
 			return ElementFunction   
 		end	
