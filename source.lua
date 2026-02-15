@@ -1067,7 +1067,7 @@ function OrionLib:MakeWindow(WindowConfig)
 				ButtonConfig = ButtonConfig or {}
 				ButtonConfig.Name = ButtonConfig.Name or "Button"
 				ButtonConfig.Callback = ButtonConfig.Callback or function() end
-				ButtonConfig.Icon = ButtonConfig.Icon or "rbxassetid://3944703587"
+				ButtonConfig.Icon = ButtonConfig.Icon or "rbxassetid://107150227368485"
 				local Button = {}
 				local Click = SetProps(MakeElement("Button"), { Size = UDim2.new(1, 0, 1, 0) })
 				local ButtonFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
