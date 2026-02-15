@@ -795,54 +795,68 @@ function OrionLib:MakeWindow(WindowConfig)
 
     -- [[ 1. SET DEFAULT & CHANGEABLE ICON ]] --
     WindowConfig.ToggleIcon = WindowConfig.ToggleIcon or "rbxassetid://105921924721005"
+    WindowConfig.ToggleSize = WindowConfig.ToggleSize or 50 -- Ukuran bisa di-custom
 
-    -- [[ SOURCE.LUA - UPDATE FLOATING TOGGLE ]] --
+    -- [[ SOURCE.LUA - UPDATE FLOATING TOGGLE (MODERN STYLE) ]] --
 
-    local FloatingToggle = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 100), {
-        Size = UDim2.new(0, 0, 0, 0), -- Tetap 0 untuk animasi masuk
+    -- Wadah utama dibuat transparan total
+    local FloatingToggle = AddThemeObject(SetProps(MakeElement("Frame"), {
+        Size = UDim2.new(0, 0, 0, 0), -- Mulai dari 0 untuk animasi masuk
         Position = UDim2.new(0.1, 0, 0.5, 0),
         Parent = Orion,
         Visible = false,
         ZIndex = 100,
-        BackgroundTransparency = WindowConfig.WindowTransparency or 0.3,
+        BackgroundTransparency = 1, -- Transparan agar hanya gambar yang terlihat
         Active = true,
         AnchorPoint = Vector2.new(0.5, 0.5)
-    }), {
-        -- Outline tetap ikut tema
-        AddThemeObject(MakeElement("Stroke", nil, 2), "Stroke"),
-        
-        -- Icon Utama: Ukuran diperbesar ke 45x45 agar penuh di frame 50x50
-        SetProps(MakeElement("Image", WindowConfig.ToggleIcon), {
-            Size = UDim2.new(0, 45, 0, 45), -- Diperbesar dari 30 ke 45
-            Position = UDim2.new(0.5, 0, 0.5, 0),
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            ImageColor3 = Color3.fromRGB(255, 255, 255),
-            ScaleType = Enum.ScaleType.Fit, -- Memastikan gambar tidak gepeng
-            Name = "Icon",
-            ZIndex = 101
-        }),
-        
-        -- Tombol Klik: Kita jadikan ini sebagai titik Drag
-        SetProps(MakeElement("Button"), {
-            Size = UDim2.new(1, 0, 1, 0),
-            Name = "ToggleBtn",
-            ZIndex = 102
-        })
     }), "Second")
 
+    -- Layer Bayangan (Modern Shadow) agar gambar terlihat melayang
+    local Shadow = Create("ImageLabel", {
+        Name = "Shadow",
+        Parent = FloatingToggle,
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://6014261993", -- Shadow lembut
+        ImageColor3 = Color3.fromRGB(0, 0, 0),
+        ImageTransparency = 0.6,
+        Size = UDim2.new(1.5, 0, 1.5, 0), -- Lebih lebar dari icon
+        Position = UDim2.new(0.5, 0, 0.5, 2),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        ZIndex = 99
+    })
+
+    -- Icon Utama (Mengisi penuh wadah agar "pas")
+    local MainIcon = SetProps(MakeElement("Image", WindowConfig.ToggleIcon), {
+        Parent = FloatingToggle,
+        Size = UDim2.new(1, 0, 1, 0), 
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundTransparency = 1,
+        ImageColor3 = Color3.fromRGB(255, 255, 255),
+        ScaleType = Enum.ScaleType.Fit, -- Gambar tidak gepeng
+        Name = "Icon",
+        ZIndex = 100
+    })
+
+    -- Tombol Klik & Drag (Transparan di paling atas)
+    local ToggleBtn = SetProps(MakeElement("Button"), {
+        Parent = FloatingToggle,
+        Size = UDim2.new(1, 0, 1, 0),
+        Name = "ToggleBtn",
+        ZIndex = 102
+    })
+
     -- [[ PERBAIKAN DRAG ]] --
-    -- Kita gunakan ToggleBtn sebagai 'DragPoint' karena dia yang menerima input klik
-    MakeDraggable(FloatingToggle.ToggleBtn, FloatingToggle)
+    -- Menggunakan tombol transparan sebagai pemicu drag agar lancar
+    MakeDraggable(ToggleBtn, FloatingToggle)
 
     -- [[ 2. FUNGSI UNTUK GANTI IMAGE TOGEL SECARA DINAMIS ]] --
     function OrionLib:ChangeToggleIcon(NewIconID)
-        FloatingToggle.Icon.Image = (string.find(NewIconID, "rbxassetid://") and NewIconID) or "rbxassetid://" .. NewIconID
+        MainIcon.Image = (string.find(NewIconID, "rbxassetid://") and NewIconID) or "rbxassetid://" .. NewIconID
     end
 
-    -- [[ 3. ANIMASI MINIMIZE (WINDOW KE TOGGLE) NEW ]] --
+    -- [[ 3. ANIMASI MINIMIZE (WINDOW KE TOGGLE) ]] --
     AddConnection(MinimizeBtn.MouseButton1Up, function()
         MainWindow.ClipsDescendants = true
-        -- Perbaikan: Enum.EasingStyle.BackOut -> Enum.EasingStyle.Back
         local Tween = TweenService:Create(MainWindow, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
             Size = UDim2.new(0, 0, 0, 0),
             Position = FloatingToggle.Position,
@@ -853,16 +867,15 @@ function OrionLib:MakeWindow(WindowConfig)
         Tween.Completed:Connect(function()
             MainWindow.Visible = false
             FloatingToggle.Visible = true
-            -- Perbaikan EasingStyle di sini
+            -- Animasi membesar menggunakan ToggleSize
             TweenService:Create(FloatingToggle, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                Size = UDim2.new(0, 50, 0, 50)
+                Size = UDim2.new(0, WindowConfig.ToggleSize, 0, WindowConfig.ToggleSize)
             }):Play()
         end)
     end)
 
-    -- [[ 4. ANIMASI RE-OPEN (TOGGLE KE WINDOW) NEW ]] --
-    AddConnection(FloatingToggle.ToggleBtn.MouseButton1Up, function()
-        -- Perbaikan EasingStyle di sini juga
+    -- [[ 4. ANIMASI RE-OPEN (TOGGLE KE WINDOW) ]] --
+    AddConnection(ToggleBtn.MouseButton1Up, function()
         local TweenOut = TweenService:Create(FloatingToggle, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
             Size = UDim2.new(0, 0, 0, 0)
         })
