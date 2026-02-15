@@ -461,8 +461,6 @@ local NotificationHolder = SetProps(SetChildren(MakeElement("TFrame"), {
 	Parent = Orion
 })
 
--- [[ SOURCE.LUA - FIXED DIALOG (NO MORE BLANK BOX) ]] --
-
 function OrionLib:AddDialog(Config)
     Config = Config or {}
     Config.Title = Config.Title or "Dialog"
@@ -476,117 +474,72 @@ function OrionLib:AddDialog(Config)
         BackgroundColor3 = Color3.fromRGB(0, 0, 0),
         BackgroundTransparency = 1,
         Parent = Orion,
-        ZIndex = 499,
+        ZIndex = 5000, -- Naikkan ZIndex agar di atas segalanya
         Active = true
     })
 
     local DialogFrame = AddThemeObject(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 10), {
         Parent = DialogOverlay,
-        Size = UDim2.new(0, 300, 0, 150), -- Langsung set size asli agar konten bisa kalkulasi posisi
+        Size = UDim2.new(0, 300, 0, 150),
         Position = UDim2.new(0.5, 0, 0.5, 0),
         AnchorPoint = Vector2.new(0.5, 0.5),
-        ZIndex = 500,
-        ClipsDescendants = false -- MATIKAN INI agar tulisan tidak terpotong saat animasi
+        ZIndex = 5001,
+        ClipsDescendants = false -- Pastikan false agar elemen dalam terlihat
     }), "Second")
 
     AddThemeObject(MakeElement("Stroke", nil, 2), "Stroke").Parent = DialogFrame
 
-    -- Pakai Create langsung agar 100% kontrol warna dan visibilitas
+    -- Judul & Konten
     local TitleLabel = Create("TextLabel", {
-        Name = "Title",
-        Parent = DialogFrame,
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 40),
-        Position = UDim2.new(0, 0, 0, 15),
-        Text = Config.Title,
-        TextColor3 = Color3.fromRGB(255, 255, 255), -- Paksa Putih
-        TextSize = 18,
-        Font = Enum.Font.GothamBold,
-        ZIndex = 501
+        Parent = DialogFrame, BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 40),
+        Position = UDim2.new(0, 0, 0, 15), Text = Config.Title, TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 18, Font = Enum.Font.GothamBold, ZIndex = 5002
     })
 
     local ContentLabel = Create("TextLabel", {
-        Name = "Content",
-        Parent = DialogFrame,
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, -40, 0, 45),
-        Position = UDim2.new(0, 20, 0, 50),
-        Text = Config.Content,
-        TextColor3 = Color3.fromRGB(200, 200, 200), -- Abu-abu terang
-        TextSize = 13,
-        Font = Enum.Font.Gotham,
-        TextWrapped = true,
-        ZIndex = 501
+        Parent = DialogFrame, BackgroundTransparency = 1, Size = UDim2.new(1, -40, 0, 45),
+        Position = UDim2.new(0, 20, 0, 50), Text = Config.Content, TextColor3 = Color3.fromRGB(200, 200, 200),
+        TextSize = 13, Font = Enum.Font.Gotham, TextWrapped = true, ZIndex = 5002
     })
 
-    -- Tombol YES (Bungkus dalam frame agar rounded)
+    -- Tombol YES
     local YesBtn = AddThemeObject(SetProps(MakeElement("RoundFrame", Color3.fromRGB(200, 40, 40), 0, 6), {
         Size = UDim2.new(0, 110, 0, 35),
-        Position = UDim2.new(0.5, -120, 1, -45),
-        Parent = DialogFrame,
-        ZIndex = 502
+        Position = UDim2.new(0.5, -120, 0.75, 0), -- Posisi eksplisit
+        Parent = DialogFrame, ZIndex = 5003
     }), "Stroke")
 
-    Create("TextLabel", {
-        Parent = YesBtn,
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 1, 0),
-        Text = Config.YesText,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        Font = Enum.Font.GothamBold,
-        TextSize = 14,
-        ZIndex = 503
-    })
-
     local YesClick = Create("TextButton", {
-        Parent = YesBtn,
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Text = "",
-        ZIndex = 504
+        Parent = YesBtn, Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1,
+        Text = Config.YesText, TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.GothamBold, TextSize = 14, ZIndex = 5004
     })
 
     -- Tombol NO
     local NoBtn = AddThemeObject(SetProps(MakeElement("RoundFrame", Color3.fromRGB(45, 45, 45), 0, 6), {
         Size = UDim2.new(0, 110, 0, 35),
-        Position = UDim2.new(0.5, 10, 1, -45),
-        Parent = DialogFrame,
-        ZIndex = 502
+        Position = UDim2.new(0.5, 10, 0.75, 0),
+        Parent = DialogFrame, ZIndex = 5003
     }), "Divider")
 
-    Create("TextLabel", {
-        Parent = NoBtn,
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 1, 0),
-        Text = Config.NoText,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        Font = Enum.Font.GothamBold,
-        TextSize = 14,
-        ZIndex = 503
-    })
-
     local NoClick = Create("TextButton", {
-        Parent = NoBtn,
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Text = "",
-        ZIndex = 504
+        Parent = NoBtn, Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1,
+        Text = Config.NoText, TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.GothamBold, TextSize = 14, ZIndex = 5004
     })
 
-    - [[ ANIMASI MASUK - FIXED ]] --
-    local DialogScale = Create("UIScale", { Parent = DialogFrame, Scale = 0 }) 
-    
+    -- [[ ANIMASI MASUK FIXED ]]
+    local DialogScale = Create("UIScale", { Parent = DialogFrame, Scale = 0 })
     TweenService:Create(DialogOverlay, TweenInfo.new(0.3), {BackgroundTransparency = 0.5}):Play()
     TweenService:Create(DialogScale, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
 
-    -- [[ EVENT CLICK ]] --
+    -- [[ EVENT CLICK FIXED ]]
     YesClick.MouseButton1Up:Connect(function()
         Config.Callback()
         DialogOverlay:Destroy()
     end)
 
     NoClick.MouseButton1Up:Connect(function()
-        -- Gunakan DialogScale di sini juga
         local TweenOut = TweenService:Create(DialogScale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Scale = 0})
         TweenService:Create(DialogOverlay, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
         TweenOut:Play()
@@ -745,7 +698,8 @@ function OrionLib:MakeWindow(WindowConfig)
     local Loaded = false
     local UIHidden = false
 
-    -- Logika Auto-Detect Device
+    -- Logika Auto-Detect
+    local UserInputService = game:GetService("UserInputService")
     local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
     local DefaultSize = IsMobile and UDim2.new(0, 450, 0, 260) or UDim2.new(0, 615, 0, 344)
     local DefaultPos = UDim2.new(0.5, -DefaultSize.X.Offset/2, 0.5, -DefaultSize.Y.Offset/2)
@@ -929,7 +883,10 @@ function OrionLib:MakeWindow(WindowConfig)
         })
     }), "Main")
 	
-    MakeResizable(MainWindow.ResizeHandle, MainWindow)
+    -- [[ RESIZE & DRAG ]]
+    if MainWindow:FindFirstChild("ResizeHandle") then
+        MakeResizable(MainWindow.ResizeHandle, MainWindow)
+    end
     MakeDraggable(DragPoint, MainWindow)
 	
    -- [[ FIX LOGIKA BACKGROUND IMAGE ]]
