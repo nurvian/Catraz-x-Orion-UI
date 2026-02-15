@@ -1271,29 +1271,34 @@ function OrionLib:MakeWindow(WindowConfig)
 				return Slider
 			end  
 
-            -- [[ SOURCE.LUA - UPDATE ADDDROP DOWN DENGAN SEARCH BAR ]] --
+            -- [[ SOURCE.LUA - UPDATE DROPDOWN: MULTI-SELECT & DESELECT & SEARCH ]] --
 
             function ElementFunction:AddDropdown(DropdownConfig)
                 DropdownConfig = DropdownConfig or {}
                 DropdownConfig.Name = DropdownConfig.Name or "Dropdown"
                 DropdownConfig.Options = DropdownConfig.Options or {}
                 DropdownConfig.Default = DropdownConfig.Default or ""
-                DropdownConfig.Search = DropdownConfig.Search or false -- FITUR BARU: Aktifkan Search Bar
+                DropdownConfig.Multi = DropdownConfig.Multi or false -- FITUR BARU: Pilihan Ganda
+                DropdownConfig.Search = DropdownConfig.Search or false 
                 DropdownConfig.Callback = DropdownConfig.Callback or function() end
                 DropdownConfig.Flag = DropdownConfig.Flag or nil
                 DropdownConfig.Save = DropdownConfig.Save or false
 
-                local Dropdown = {Value = DropdownConfig.Default, Options = DropdownConfig.Options, Buttons = {}, Toggled = false, Type = "Dropdown", Save = DropdownConfig.Save}
-                local MaxElements = 5
-                if not table.find(Dropdown.Options, Dropdown.Value) then Dropdown.Value = "..." end
-
-                local DropdownList = MakeElement("List")
+                -- Inisialisasi Value (Kalau Multi pake Tabel, kalau Single pake String)
+                local Dropdown = {
+                    Value = DropdownConfig.Multi and {} or DropdownConfig.Default, 
+                    Options = DropdownConfig.Options, 
+                    Buttons = {}, 
+                    Toggled = false, 
+                    Type = "Dropdown", 
+                    Save = DropdownConfig.Save
+                }
                 
-                -- Hitung posisi awal Container (Kalau ada search bar, container turun lebih bawah)
+                local MaxElements = 5
                 local ContainerYOffset = DropdownConfig.Search and 72 or 38
                 
+                local DropdownList = MakeElement("List")
                 local DropdownContainer = AddThemeObject(SetProps(SetChildren(MakeElement("ScrollFrame", Color3.fromRGB(40, 40, 40), 4), {DropdownList}), {
-                    Parent = nil, -- Akan di set nanti di dalam DropdownFrame
                     Position = UDim2.new(0, 0, 0, ContainerYOffset),
                     Size = UDim2.new(1, 0, 1, -ContainerYOffset),
                     ClipsDescendants = true
@@ -1305,7 +1310,7 @@ function OrionLib:MakeWindow(WindowConfig)
                     Size = UDim2.new(1, 0, 0, 38),
                     Parent = ItemParent,
                     ClipsDescendants = true,
-                    BackgroundTransparency = WindowConfig.WindowTransparency -- Ikut transparansi window
+                    BackgroundTransparency = WindowConfig.WindowTransparency
                 }), {
                     DropdownContainer,
                     SetProps(SetChildren(MakeElement("TFrame"), {
@@ -1321,7 +1326,7 @@ function OrionLib:MakeWindow(WindowConfig)
                             Position = UDim2.new(1, -30, 0.5, 0),
                             Name = "Ico"
                         }), "TextDark"),
-                        AddThemeObject(SetProps(MakeElement("Label", "Selected", 13), {
+                        AddThemeObject(SetProps(MakeElement("Label", "...", 13), {
                             Size = UDim2.new(1, -40, 1, 0),
                             Font = Enum.Font.Gotham,
                             Name = "Selected",
@@ -1339,9 +1344,58 @@ function OrionLib:MakeWindow(WindowConfig)
                     MakeElement("Corner")
                 }), "Second")
 
-                DropdownContainer.Parent = DropdownFrame
+                -- Logika Update Teks di UI
+                local function UpdateSelectedText()
+                    if DropdownConfig.Multi then
+                        if #Dropdown.Value == 0 then
+                            DropdownFrame.F.Selected.Text = "..."
+                        else
+                            DropdownFrame.F.Selected.Text = table.concat(Dropdown.Value, ", ")
+                        end
+                    else
+                        DropdownFrame.F.Selected.Text = (Dropdown.Value == "" or Dropdown.Value == nil) and "..." or tostring(Dropdown.Value)
+                    end
+                end
 
-                -- [[ LOGIKA SEARCH BAR ]] --
+                -- FUNGSI SET (Mendukung Multi & Deselect)
+                function Dropdown:Set(Value)
+                    if DropdownConfig.Multi then
+                        -- Logika Tabel untuk Multi
+                        if type(Dropdown.Value) ~= "table" then Dropdown.Value = {} end
+                        local FoundIndex = table.find(Dropdown.Value, Value)
+                        
+                        if FoundIndex then
+                            table.remove(Dropdown.Value, FoundIndex) -- FITUR: Deselect di Multi
+                        else
+                            table.insert(Dropdown.Value, Value) -- Pilih baru
+                        end
+                    else
+                        -- Logika String untuk Single
+                        if Dropdown.Value == Value then
+                            Dropdown.Value = "" -- FITUR: Deselect di Single
+                        else
+                            Dropdown.Value = Value -- Pilih baru
+                        end
+                    end
+
+                    -- Update Visual Tombol
+                    for Name, Btn in pairs(Dropdown.Buttons) do
+                        local IsActive = false
+                        if DropdownConfig.Multi then
+                            IsActive = table.find(Dropdown.Value, Name)
+                        else
+                            IsActive = (Dropdown.Value == Name)
+                        end
+                        
+                        TweenService:Create(Btn, TweenInfo.new(.15), {BackgroundTransparency = IsActive and 0 or 1}):Play()
+                        TweenService:Create(Btn.Title, TweenInfo.new(.15), {TextTransparency = IsActive and 0 or 0.4}):Play()
+                    end
+
+                    UpdateSelectedText()
+                    return DropdownConfig.Callback(Dropdown.Value)
+                end
+
+                -- (Logika Search Bar & Refresh tetap sama seperti sebelumnya)
                 if DropdownConfig.Search then
                     local SearchFrame = AddThemeObject(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
                         Size = UDim2.new(1, -20, 0, 28),
@@ -1364,22 +1418,13 @@ function OrionLib:MakeWindow(WindowConfig)
                         ClearTextOnFocus = false
                     }), "Text")
 
-                    -- Fungsi Filter Pencarian
                     SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
                         local Input = SearchInput.Text:lower()
                         for Name, Button in pairs(Dropdown.Buttons) do
-                            if string.find(Name:lower(), Input) then
-                                Button.Visible = true
-                            else
-                                Button.Visible = false
-                            end
+                            Button.Visible = string.find(Name:lower(), Input) and true or false
                         end
                     end)
                 end
-
-                AddConnection(DropdownList:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-                    DropdownContainer.CanvasSize = UDim2.new(0, 0, 0, DropdownList.AbsoluteContentSize.Y)
-                end)  
 
                 local function AddOptions(Options)
                     for _, Option in pairs(Options) do
@@ -1399,7 +1444,7 @@ function OrionLib:MakeWindow(WindowConfig)
                         
                         AddConnection(OptionBtn.MouseButton1Click, function()
                             Dropdown:Set(Option)
-                            SaveCfg(game.GameId)
+                            if OrionLib.SaveCfg then SaveCfg(game.GameId) end
                         end)
                         Dropdown.Buttons[Option] = OptionBtn
                     end
@@ -1408,48 +1453,28 @@ function OrionLib:MakeWindow(WindowConfig)
                 function Dropdown:Refresh(Options, Delete)
                     if Delete then
                         for _,v in pairs(Dropdown.Buttons) do v:Destroy() end    
-                        table.clear(Dropdown.Options)
                         table.clear(Dropdown.Buttons)
                     end
                     Dropdown.Options = Options
                     AddOptions(Dropdown.Options)
                 end  
 
-                function Dropdown:Set(Value)
-                    if not table.find(Dropdown.Options, Value) then
-                        Dropdown.Value = "..."
-                        DropdownFrame.F.Selected.Text = Dropdown.Value
-                        return
-                    end
-                    Dropdown.Value = Value
-                    DropdownFrame.F.Selected.Text = Dropdown.Value
-                    for Name, v in pairs(Dropdown.Buttons) do
-                        TweenService:Create(v,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{BackgroundTransparency = 1}):Play()
-                        TweenService:Create(v.Title,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{TextTransparency = 0.4}):Play()
-                    end	
-                    if Dropdown.Buttons[Value] then
-                        TweenService:Create(Dropdown.Buttons[Value],TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{BackgroundTransparency = 0}):Play()
-                        TweenService:Create(Dropdown.Buttons[Value].Title,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{TextTransparency = 0}):Play()
-                    end
-                    return DropdownConfig.Callback(Dropdown.Value)
-                end
-
                 AddConnection(Click.MouseButton1Click, function()
                     Dropdown.Toggled = not Dropdown.Toggled
                     DropdownFrame.F.Line.Visible = Dropdown.Toggled
-                    TweenService:Create(DropdownFrame.F.Ico,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Rotation = Dropdown.Toggled and 180 or 0}):Play()
+                    TweenService:Create(DropdownFrame.F.Ico, TweenInfo.new(.15), {Rotation = Dropdown.Toggled and 180 or 0}):Play()
                     
                     local TargetHeight = 38
                     if Dropdown.Toggled then
                         local ContentHeight = DropdownList.AbsoluteContentSize.Y + ContainerYOffset
                         TargetHeight = math.min(ContentHeight, 38 + (MaxElements * 28) + (DropdownConfig.Search and 34 or 0))
                     end
-                    
-                    TweenService:Create(DropdownFrame,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Size = UDim2.new(1, 0, 0, TargetHeight)}):Play()
+                    TweenService:Create(DropdownFrame, TweenInfo.new(.15), {Size = UDim2.new(1, 0, 0, TargetHeight)}):Play()
                 end)
 
                 Dropdown:Refresh(Dropdown.Options, false)
-                Dropdown:Set(Dropdown.Value)
+                UpdateSelectedText()
+                
                 if DropdownConfig.Flag then OrionLib.Flags[DropdownConfig.Flag] = Dropdown end
                 return Dropdown
             end
@@ -1865,47 +1890,128 @@ function OrionLib:MakeWindow(WindowConfig)
 			})
 		end
 
-    -- [[ TAMBAHKAN KODE INI SEBELUM return TabFunction ]] --
+    -- [[ SOURCE.LUA - ADVANCED CONFIG MANAGEMENT ]] --
 
-	function TabFunction:AddConfigTab(ConfigConfig)
-		ConfigConfig = ConfigConfig or {}
-		
-		-- 1. Buat Tab Otomatis
-		local ConfigTab = self:MakeTab({
-			Name = ConfigConfig.Name or "Config",
-			Icon = ConfigConfig.Icon or "settings" 
-		})
+    function TabFunction:AddConfigTab(ConfigConfig)
+        ConfigConfig = ConfigConfig or {}
+        local CurrentConfigName = ""
+        local SelectedFile = ""
 
-		local Section = ConfigTab:AddSection({
-			Name = "Configuration Management"
-		})
+        local ConfigTab = self:MakeTab({
+            Name = ConfigConfig.Name or "Config",
+            Icon = ConfigConfig.Icon or "settings"
+        })
 
-		-- 2. Tombol Simpan
-		Section:AddButton({
-			Name = "Save Current Config",
-			Callback = function()
-				SaveCfg(game.GameId) 
-				OrionLib:MakeNotification({
-					Name = "Config System",
-					Content = "Configuration has been saved successfully!",
-					Time = 3,
-					Image = "check"
-				})
-			end
-		})
+        -- SECTION 1: CREATE & SAVE
+        local CreateSection = ConfigTab:AddSection({ Name = "Create & Save" })
 
-		-- 3. Toggle Auto Load
-		Section:AddToggle({
-			Name = "Auto Load on Startup",
-			Default = OrionLib.SaveCfg, 
-			Callback = function(Value)
-				OrionLib.SaveCfg = Value
-				SaveCfg(game.GameId) 
-			end
-		})
+        CreateSection:AddTextbox({
+            Name = "Config Name",
+            Default = "",
+            TextDisappear = false,
+            Callback = function(Value)
+                CurrentConfigName = Value
+            end
+        })
 
-		return ConfigTab
-	end
+        CreateSection:AddButton({
+            Name = "Save / Overwrite Config",
+            Callback = function()
+                if CurrentConfigName ~= "" then
+                    SaveCfg(CurrentConfigName)
+                    OrionLib:MakeNotification({
+                        Name = "Config System",
+                        Content = "Config '" .. CurrentConfigName .. "' saved/overwritten!",
+                        Time = 3,
+                        Image = "check"
+                    })
+                else
+                    OrionLib:MakeNotification({ Name = "Error", Content = "Please enter a name!", Time = 3 })
+                end
+            end
+        })
+
+        -- SECTION 2: LOAD & MANAGE FILES
+        local FileSection = ConfigTab:AddSection({ Name = "File Manager" })
+
+        local FileList = FileSection:AddDropdown({
+            Name = "Existing Configs",
+            Default = "None",
+            Options = {}, -- Akan diisi otomatis
+            Search = true,
+            Callback = function(Value)
+                SelectedFile = Value
+            end
+        })
+
+        -- Fungsi buat refresh daftar file di folder
+        local function RefreshFiles()
+            local Files = {}
+            if isfolder(OrionLib.Folder) then
+                for _, File in ipairs(listfiles(OrionLib.Folder)) do
+                    -- Ambil nama filenya aja, buang path-nya
+                    local Name = File:gsub(OrionLib.Folder .. "/", ""):gsub(".txt", "")
+                    table.insert(Files, Name)
+                end
+            end
+            FileList:Refresh(Files, true)
+        end
+
+        FileSection:AddButton({
+            Name = "Refresh File List",
+            Callback = RefreshFiles
+        })
+
+        FileSection:AddButton({
+            Name = "Load Selected Config",
+            Callback = function()
+                if SelectedFile ~= "" and SelectedFile ~= "None" then
+                    local Path = OrionLib.Folder .. "/" .. SelectedFile .. ".txt"
+                    if isfile(Path) then
+                        LoadCfg(readfile(Path))
+                        OrionLib:MakeNotification({ Name = "Success", Content = "Loaded: " .. SelectedFile, Time = 3 })
+                    end
+                end
+            end
+        })
+
+        -- SECTION 3: IMPORT & EXPORT
+        local ExternalSection = ConfigTab:AddSection({ Name = "Import & Export" })
+
+        ExternalSection:AddButton({
+            Name = "Export Selected to Clipboard (.json)",
+            Callback = function()
+                if SelectedFile ~= "" and SelectedFile ~= "None" then
+                    local Path = OrionLib.Folder .. "/" .. SelectedFile .. ".txt"
+                    if isfile(Path) then
+                        setclipboard(readfile(Path)) -- Salin isi file ke clipboard
+                        OrionLib:MakeNotification({ Name = "Export", Content = "JSON copied to clipboard!", Time = 3 })
+                    end
+                end
+            end
+        })
+
+        ExternalSection:AddTextbox({
+            Name = "Import Raw JSON",
+            Default = "",
+            TextDisappear = true,
+            Callback = function(Value)
+                if Value ~= "" then
+                    local Success, Err = pcall(function()
+                        LoadCfg(Value) -- Langsung load dari string JSON
+                    end)
+                    if Success then
+                        OrionLib:MakeNotification({ Name = "Import", Content = "Raw config applied!", Time = 3 })
+                    else
+                        OrionLib:MakeNotification({ Name = "Error", Content = "Invalid JSON Data!", Time = 3 })
+                    end
+                end
+            end
+        })
+
+        RefreshFiles() -- Load daftar file pertama kali
+        return ConfigTab
+    end
 		
 		return TabFunctions 
 	end
