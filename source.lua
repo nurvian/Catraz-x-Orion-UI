@@ -822,21 +822,19 @@ function OrionLib:MakeWindow(WindowConfig)
 		}),
 	}), "Second")
 
-	-- [[ 1. CONFIG TAMBAHAN UNTUK HEADER ]] --
+    -- [[ 1. SIAPKAN ELEMEN HEADER (TANPA PARENT DULU) ]] --
     WindowConfig.Version = WindowConfig.Version or "v1.0.0"
     WindowConfig.Subtext = WindowConfig.Subtext or "Premium Script Hub"
-    WindowConfig.TagColor = WindowConfig.TagColor or OrionLib.Themes[OrionLib.SelectedTheme].Stroke -- Warna BG Tag
+    WindowConfig.TagColor = WindowConfig.TagColor or OrionLib.Themes[OrionLib.SelectedTheme].Stroke
 
-    -- [[ 2. JUDUL UTAMA (WINDOW NAME) ]] --
     local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Name, 18), {
         Size = UDim2.new(0, 0, 0, 20),
-        Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, -12), -- Posisi dinamis jika ada ikon
+        Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, -12),
         Font = Enum.Font.GothamBlack,
         Name = "Title",
-        AutomaticSize = Enum.AutomaticSize.X -- Lebar otomatis menyesuaikan teks
+        AutomaticSize = Enum.AutomaticSize.X
     }), "Text")
 
-    -- [[ 3. SUBTEXT (DESKRIPSI DI BAWAH JUDUL) ]] --
     local WindowSubtext = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Subtext, 11), {
         Size = UDim2.new(0, 0, 0, 15),
         Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, 6),
@@ -845,16 +843,13 @@ function OrionLib:MakeWindow(WindowConfig)
         AutomaticSize = Enum.AutomaticSize.X
     }), "TextDark")
 
-    -- [[ 4. VERSION TAG (DENGAN BACKGROUND) ]] --
     local VersionTag = SetChildren(SetProps(MakeElement("RoundFrame", WindowConfig.TagColor, 0, 4), {
-        Parent = MainWindow.TopBar,
         Size = UDim2.new(0, 0, 0, 16),
-        Position = UDim2.new(0, 0, 0, 0), -- Akan diatur otomatis posisinya
         Name = "VersionTag",
         AutomaticSize = Enum.AutomaticSize.X,
         ZIndex = 10
     }), {
-        MakeElement("Padding", 0, 6, 6, 0), -- Kasih jarak kiri kanan di dalam tag
+        MakeElement("Padding", 0, 6, 6, 0),
         SetProps(MakeElement("Label", WindowConfig.Version, 10), {
             Size = UDim2.new(1, 0, 1, 0),
             TextXAlignment = Enum.TextXAlignment.Center,
@@ -862,30 +857,6 @@ function OrionLib:MakeWindow(WindowConfig)
             TextColor3 = Color3.fromRGB(255, 255, 255)
         })
     })
-
-    -- Logika nempelin Tag di sebelah kanan Judul
-    task.spawn(function()
-        while MainWindow and MainWindow.Parent do
-            VersionTag.Position = UDim2.new(0, WindowName.AbsolutePosition.X - MainWindow.AbsolutePosition.X + WindowName.AbsoluteSize.X + 8, 0.5, -10)
-            task.wait(0.1)
-        end
-    end)
-
-    -- [[ 5. HEADER ICON (GAMBAR DI KIRI) ]] --
-    if WindowConfig.ShowIcon then
-        local WindowIcon = SetProps(MakeElement("Image", WindowConfig.Icon), {
-            Parent = MainWindow.TopBar,
-            Size = UDim2.new(0, 24, 0, 24),
-            Position = UDim2.new(0, 20, 0.5, 0),
-            AnchorPoint = Vector2.new(0, 0.5),
-            Name = "HeaderIcon",
-            ZIndex = 10
-        })
-    end
-
-    -- Masukkan elemen ke TopBar
-    WindowName.Parent = MainWindow.TopBar
-    WindowSubtext.Parent = MainWindow.TopBar
 
 	local WindowTopBarLine = AddThemeObject(SetProps(MakeElement("Frame"), {
 		Size = UDim2.new(1, 0, 0, 1),
@@ -905,7 +876,8 @@ function OrionLib:MakeWindow(WindowConfig)
             Size = UDim2.new(1, 0, 0, 50),
             Name = "TopBar"
         }), {
-            WindowName,
+            WindowName, -- Masukkan judul
+            WindowSubtext, -- Masukkan subtext
             WindowTopBarLine,
             AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 7), {
                 Size = UDim2.new(0, 70, 0, 30),
@@ -937,6 +909,29 @@ function OrionLib:MakeWindow(WindowConfig)
         })
     }), "Main")
 	
+    -- [[ 3. PASANG PARENT & LOGIKA SETELAH WINDOW JADI ]] --
+    VersionTag.Parent = MainWindow.TopBar -- Sekarang MainWindow sudah tidak nil
+
+    if WindowConfig.ShowIcon then
+        local WindowIcon = SetProps(MakeElement("Image", WindowConfig.Icon), {
+            Parent = MainWindow.TopBar,
+            Size = UDim2.new(0, 24, 0, 24),
+            Position = UDim2.new(0, 20, 0.5, 0),
+            AnchorPoint = Vector2.new(0, 0.5),
+            Name = "HeaderIcon",
+            ZIndex = 10
+        })
+    end
+
+    -- Update posisi Tag secara dinamis
+    task.spawn(function()
+        while MainWindow and MainWindow.Parent do
+            local TitlePos = WindowName.AbsolutePosition.X - MainWindow.AbsolutePosition.X
+            VersionTag.Position = UDim2.new(0, TitlePos + WindowName.AbsoluteSize.X + 8, 0.5, -10)
+            task.wait(0.2)
+        end
+    end)
+
     -- [[ RESIZE & DRAG ]]
     if MainWindow:FindFirstChild("ResizeHandle") then
         MakeResizable(MainWindow.ResizeHandle, MainWindow)
