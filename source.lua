@@ -425,7 +425,7 @@ local NotificationHolder = SetProps(SetChildren(MakeElement("TFrame"), {
 	Parent = Orion
 })
 
--- NEW GANTI SELURUH FUNCTION OrionLib:MakeNotification DENGAN INI:
+-- NEW NEW GANTI SELURUH FUNCTION OrionLib:MakeNotification DENGAN INI:
 
 function OrionLib:MakeNotification(NotificationConfig)
 	spawn(function()
