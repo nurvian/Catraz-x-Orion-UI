@@ -362,31 +362,33 @@ CreateElement("ScrollFrame", function(Color, Width)
 	return ScrollFrame
 end)
 
--- GANTI BLOK CreateElement("Image") YANG LAMA DENGAN INI:
-
+-- [[ SOURCE.LUA - UPDATE CREATEELEMENT IMAGE ]] --
 CreateElement("Image", function(ImageName_or_ID)
-    -- Default properties
     local ImageProps = {
         BackgroundTransparency = 1,
         Image = "",
-        ScaleType = Enum.ScaleType.Fit -- Default Roblox
+        ScaleType = Enum.ScaleType.Fit
     }
 
     local IconData = GetIcon(ImageName_or_ID)
     
     if IconData then
-        -- Jika ketemu di Library (misal: "Home")
-        ImageProps.Image = IconData.Image
-        ImageProps.ImageRectSize = IconData.ImageRectSize
-        ImageProps.ImageRectOffset = IconData.ImageRectPosition
-        ImageProps.ScaleType = Enum.ScaleType.Stretch -- Wajib stretch buat spritesheet
-    else
-        -- Jika inputnya ID manual (misal: "rbxassetid://123...")
+        if type(IconData) == "table" then
+            -- Jika library format Table (Spritesheet)
+            ImageProps.Image = IconData.Image
+            ImageProps.ImageRectSize = IconData.ImageRectSize
+            ImageProps.ImageRectOffset = IconData.ImageRectPosition
+            ImageProps.ScaleType = Enum.ScaleType.Stretch
+        else
+            -- Jika library format String (ID Langsung)
+            ImageProps.Image = IconData
+        end
+    elseif ImageName_or_ID then
+        -- Jika input adalah rbxassetid manual
         ImageProps.Image = ImageName_or_ID
     end
 
-    local ImageNew = Create("ImageLabel", ImageProps)
-    return ImageNew
+    return Create("ImageLabel", ImageProps)
 end)
 
 CreateElement("ImageButton", function(ImageID)
@@ -431,7 +433,7 @@ function OrionLib:MakeNotification(NotificationConfig)
 	spawn(function()
 		NotificationConfig.Name = NotificationConfig.Name or "Notification"
 		NotificationConfig.Content = NotificationConfig.Content or "Test"
-		NotificationConfig.Image = NotificationConfig.Image or "rbxassetid://4384403532"
+		NotificationConfig.Image = NotificationConfig.Image or ""
 		NotificationConfig.Time = NotificationConfig.Time or 5 
 
 		local NotificationParent = SetProps(MakeElement("TFrame"), {
@@ -551,6 +553,9 @@ function OrionLib:MakeWindow(WindowConfig)
 
 	WindowConfig = WindowConfig or {}
 	WindowConfig.Name = WindowConfig.Name or "Orion Library"
+    -- SET DEFAULT BACKGROUND DISINI (Set Kasar)
+    WindowConfig.ImageBackground = WindowConfig.ImageBackground or "rbxassetid://93195749393891"
+    WindowConfig.ImageTransparency = WindowConfig.ImageTransparency or 0.8
 	WindowConfig.ConfigFolder = WindowConfig.ConfigFolder or WindowConfig.Name
 	WindowConfig.SaveConfig = WindowConfig.SaveConfig or false
 	WindowConfig.HidePremium = WindowConfig.HidePremium or false
