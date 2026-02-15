@@ -50,45 +50,36 @@ local OrionLib = {
 	SaveCfg = false
 }
 
--- KODE BARU (MASUKKAN INI DI ATAS "local Orion = Instance.new...")
-
--- 1. Definisikan Modul Icon di sini
+-- [[ ICON MODULE KHUSUS SCRIPT HUB (CLIENT SIDE) ]] --
 local IconModule = (function()
-    local cloneref = (cloneref or clonereference or function(instance) return instance end)
-    local HttpService = cloneref(game:GetService("HttpService"))
+    local IconService = {}
+    local HttpService = game:GetService("HttpService")
     
-    local function Get(url)
-        return game:HttpGet(url) -- Asumsi pakai executor support HttpGet
-    end
+    -- Kita pakai Library Lucide dari Repository yang aktif (Footagesus)
+    -- Ini menggunakan loadstring agar format table-nya terbaca sempurna
+    local Success, Result = pcall(function()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/Icons/refs/heads/main/lucide/dist/Icons.lua"))()
+    end)
+    
+    local IconData = Success and Result or {}
 
-    local Module = {
-        Icons = {
-            lucide = loadstring(Get("https://raw.githubusercontent.com/Footagesus/Icons/refs/heads/main/lucide/dist/Icons.lua"))(),
-            -- Paket lain bisa di-uncomment kalau butuh, biar ringan pake lucide aja dlu
-            -- solar = loadstring(Get("https://raw.githubusercontent.com/Footagesus/Icons/refs/heads/main/solar/dist/Icons.lua"))(),
-        }
-    }
-
-    function Module.GetIconData(IconName)
-        -- Cek di Lucide dulu (default)
-        if Module.Icons.lucide and Module.Icons.lucide[IconName] then
-            return Module.Icons.lucide[IconName]
+    -- Fungsi untuk mengambil data Icon berdasarkan nama
+    function IconService.GetIcon(Name)
+        if not Name then return nil end
+        
+        -- Cek apakah nama icon ada di database
+        if IconData[Name] then
+            return IconData[Name] -- Mengembalikan table {Image, ImageRectSize, dll}
         end
         return nil
     end
 
-    return Module
+    return IconService
 end)()
 
--- 2. Fungsi Pembantu untuk Orion
-local function GetIcon(IconName)
-    local IconData = IconModule.GetIconData(IconName)
-    if IconData then
-        -- Format modul kamu mengembalikan table {Image = "rbxassetid...", ImageRectSize = ..., ImageRectOffset = ...}
-        return IconData
-    else
-        return nil
-    end
+-- Wrapper Function biar connect sama logika Orion kamu
+local function GetIcon(Name)
+    return IconModule.GetIcon(Name)
 end
 
 local Orion = Instance.new("ScreenGui")
@@ -831,25 +822,26 @@ function OrionLib:MakeWindow(WindowConfig)
 			}), "Text")
 		})
 
-        -- KODE BARU:
-        -- LOGIKA ICON BARU (ANTI ERROR)
-		local TabIconData = GetIcon(TabConfig.Icon) -- Cek di IconModule
+        -- LOGIKA ICON YANG AMAN (ANTI CRASH)
+		local TabIconData = GetIcon(TabConfig.Icon) -- Panggil fungsi GetIcon baru di atas
 		
 		if TabIconData then
-			-- Jika Icon ditemukan di Library (Lucide/dll)
+			-- Kalo icon ketemu di Library (contoh: Icon = "Home")
 			TabFrame.Ico.Image = TabIconData.Image
 			TabFrame.Ico.ImageRectSize = TabIconData.ImageRectSize
 			TabFrame.Ico.ImageRectOffset = TabIconData.ImageRectPosition
 			TabFrame.Ico.ScaleType = Enum.ScaleType.Stretch
 		else
-			-- Jika Icon manual (rbxassetid) atau Kosong
+			-- Kalo icon manual (rbxassetid://...) atau GAK ADA icon
 			if TabConfig.Icon and TabConfig.Icon ~= "" then
-				TabFrame.Ico.Image = TabConfig.Icon -- Pakai ID manual
-				TabFrame.Ico.ScaleType = Enum.ScaleType.Fit -- Reset scale
-				TabFrame.Ico.ImageRectSize = Vector2.new(0,0) -- Reset sprite crop
+                -- Cek apakah user masukin ID manual?
+				TabFrame.Ico.Image = TabConfig.Icon 
+				TabFrame.Ico.ScaleType = Enum.ScaleType.Fit
+				TabFrame.Ico.ImageRectSize = Vector2.new(0,0)
 				TabFrame.Ico.ImageRectOffset = Vector2.new(0,0)
 			else
-				TabFrame.Ico.Image = "" -- <--- INI PENTING: Jangan biarkan nil, kasih string kosong
+                -- INI PENYELAMATNYA: Kalo kosong, isi string kosong biar gak error
+				TabFrame.Ico.Image = "" 
 			end
 		end
         
