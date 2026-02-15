@@ -1694,16 +1694,15 @@ function OrionLib:MakeWindow(WindowConfig)
                     end
                 end
 
+                -- [[ FIX LOGIKA DROPDOWN DI SOURCE.LUA ]] --
+
                 function Dropdown:Set(Value)
                     if DropdownConfig.Multi then
                         if type(Value) == "table" then
-                            -- Langsung timpa jika input adalah tabel (dari Config)
                             Dropdown.Value = Value
                         else
-                            -- Toggle jika input adalah string (dari Klik UI)
                             if type(Dropdown.Value) ~= "table" then Dropdown.Value = {} end
                             local FoundIndex = table.find(Dropdown.Value, Value)
-                            
                             if FoundIndex then
                                 if DropdownConfig.AllowNone or #Dropdown.Value > 1 then
                                     table.remove(Dropdown.Value, FoundIndex)
@@ -1713,17 +1712,12 @@ function OrionLib:MakeWindow(WindowConfig)
                             end
                         end
                     else
-                        -- Single Select: Pastikan tidak memasukkan tabel ke dalam variabel string
+                        -- FIX: Jangan batalkan pilihan kalau nilainya sama saat startup
                         local NewValue = type(Value) == "table" and Value[1] or Value
-                        
-                        if Dropdown.Value == NewValue then
-                            if DropdownConfig.AllowNone then Dropdown.Value = "" end
-                        else
-                            Dropdown.Value = NewValue
-                        end
+                        Dropdown.Value = NewValue
                     end
 
-                    -- Update Visual Tombol (Highlight warna)
+                    -- Update Visual Tombol
                     for Name, Btn in pairs(Dropdown.Buttons) do
                         local IsActive = false
                         if DropdownConfig.Multi then
