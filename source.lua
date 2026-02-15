@@ -151,6 +151,38 @@ local function MakeDraggable(DragPoint, Main)
 	end)
 end    
 
+-- [[ SOURCE.LUA - BARIS 136 (DI BAWAH MAKEDRAGGABLE) ]] --
+
+local function MakeResizable(Handle, Target)
+    local Resizing = false
+    local StartPos = nil
+    local StartSize = nil
+
+    AddConnection(Handle.InputBegan, function(Input)
+        if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+            Resizing = true
+            StartPos = Input.Position
+            StartSize = Target.Size
+        end
+    end)
+
+    AddConnection(UserInputService.InputChanged, function(Input)
+        if Resizing and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
+            local Delta = Input.Position - StartPos
+            -- Batas minimal $450 \times 260$, maksimal $800 \times 600$
+            local NewWidth = math.clamp(StartSize.X.Offset + Delta.X, 450, 800)
+            local NewHeight = math.clamp(StartSize.Y.Offset + Delta.Y, 260, 600)
+            Target.Size = UDim2.new(0, NewWidth, 0, NewHeight)
+        end
+    end)
+
+    AddConnection(UserInputService.InputEnded, function(Input)
+        if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+            Resizing = false
+        end
+    end)
+end
+
 local function Create(Name, Properties, Children)
 	local Object = Instance.new(Name)
 	for i, v in next, Properties or {} do
@@ -277,6 +309,8 @@ local function CheckKey(Table, Key)
 		end
 	end
 end
+
+
 
 CreateElement("Corner", function(Scale, Offset)
 	local Corner = Create("UICorner", {
@@ -705,10 +739,15 @@ function OrionLib:Init()
 end	
 
 function OrionLib:MakeWindow(WindowConfig)
-	local FirstTab = true
-	local Minimized = false
-	local Loaded = false
-	local UIHidden = false
+    local FirstTab = true
+    local Minimized = false
+    local Loaded = false
+    local UIHidden = false
+
+    -- Logika Auto-Detect Device
+    local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+    local DefaultSize = IsMobile and UDim2.new(0, 450, 0, 260) or UDim2.new(0, 615, 0, 344)
+    local DefaultPos = UDim2.new(0.5, -DefaultSize.X.Offset/2, 0.5, -DefaultSize.Y.Offset/2)
 
 	WindowConfig = WindowConfig or {}
 	WindowConfig.Name = WindowConfig.Name or "Orion Library"
@@ -844,38 +883,53 @@ function OrionLib:MakeWindow(WindowConfig)
 		Position = UDim2.new(0, 0, 1, -1)
 	}), "Stroke")
 
-	-- [[ BAGIAN RAWAN ERROR YANG SUDAH DIPERBAIKI ]] --
-	local MainWindow = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 10), {
-		Parent = Orion,
-		Position = UDim2.new(0.5, -307, 0.5, -172),
-		Size = UDim2.new(0, 615, 0, 344),
-		ClipsDescendants = true,
+    -- [[ BAGIAN RAWAN ERROR YANG SUDAH DIPERBAIKI ]] --
+    local MainWindow = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 10), {
+        Parent = Orion,
+        Position = DefaultPos, -- Menggunakan variabel dari auto-detect
+        Size = DefaultSize,    -- Menggunakan variabel dari auto-detect
+        ClipsDescendants = true,
         BackgroundTransparency = WindowConfig.WindowTransparency
-	}), {
-		-- Masukkan Children dalam TABLE {} ini
-		SetChildren(SetProps(MakeElement("TFrame"), {
-			Size = UDim2.new(1, 0, 0, 50),
-			Name = "TopBar"
-		}), {
-			WindowName,
-			WindowTopBarLine,
-			AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 7), {
-				Size = UDim2.new(0, 70, 0, 30),
-				Position = UDim2.new(1, -90, 0, 10)
-			}), {
-				AddThemeObject(MakeElement("Stroke"), "Stroke"),
-				AddThemeObject(SetProps(MakeElement("Frame"), {
-					Size = UDim2.new(0, 1, 1, 0),
-					Position = UDim2.new(0.5, 0, 0, 0)
-				}), "Stroke"), 
-				CloseBtn,
-				MinimizeBtn
-			}), "Second"), 
-		}),
-		DragPoint,
-		WindowStuff
-	}), "Main")
-	-- [[ END OF MAIN WINDOW FIX ]] --
+    }), {
+        -- [[ TOPBAR ]] --
+        SetChildren(SetProps(MakeElement("TFrame"), {
+            Size = UDim2.new(1, 0, 0, 50),
+            Name = "TopBar"
+        }), {
+            WindowName,
+            WindowTopBarLine,
+            AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 7), {
+                Size = UDim2.new(0, 70, 0, 30),
+                Position = UDim2.new(1, -90, 0, 10)
+            }), {
+                AddThemeObject(MakeElement("Stroke"), "Stroke"),
+                AddThemeObject(SetProps(MakeElement("Frame"), {
+                    Size = UDim2.new(0, 1, 1, 0),
+                    Position = UDim2.new(0.5, 0, 0, 0)
+                }), "Stroke"), 
+                CloseBtn,
+                MinimizeBtn
+            }), "Second"), 
+        }),
+        DragPoint,
+        WindowStuff,
+
+        -- [[ 1. TAMBAHKAN RESIZE HANDLE DI SINI ]] --
+        Create("ImageLabel", {
+            Name = "ResizeHandle",
+            Position = UDim2.new(1, -18, 1, -18), -- Pojok kanan bawah
+            Size = UDim2.new(0, 18, 0, 18),
+            BackgroundTransparency = 1,
+            Image = "rbxassetid://6073489112", -- Icon resize segitiga
+            ImageColor3 = Color3.fromRGB(255, 255, 255),
+            ImageTransparency = 0.5,
+            ZIndex = 10,
+            Active = true
+        })
+    }), "Main")
+	
+    MakeResizable(MainWindow.ResizeHandle, MainWindow)
+    MakeDraggable(DragPoint, MainWindow)
 	
    -- [[ FIX LOGIKA BACKGROUND IMAGE ]]
 	if WindowConfig.ImageBackground then
@@ -905,8 +959,6 @@ function OrionLib:MakeWindow(WindowConfig)
 		})
 		WindowIcon.Parent = MainWindow.TopBar
 	end	
-
-	MakeDraggable(DragPoint, MainWindow)
 
     -- [[ SOURCE.LUA - UPDATE CLOSE BUTTON ]] --
     AddConnection(CloseBtn.MouseButton1Up, function()
