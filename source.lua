@@ -1367,43 +1367,59 @@ function OrionLib:MakeWindow(WindowConfig)
                 -- Logika Update Teks di UI
                 local function UpdateSelectedText()
                     if DropdownConfig.Multi then
+                        if type(Dropdown.Value) ~= "table" then Dropdown.Value = {} end
                         if #Dropdown.Value == 0 then
                             DropdownFrame.F.Selected.Text = "..."
                         else
-                            DropdownFrame.F.Selected.Text = table.concat(Dropdown.Value, ", ")
+                            -- Safety check: pastikan isinya string sebelum concat
+                            local DisplayTable = {}
+                            for _, v in ipairs(Dropdown.Value) do
+                                table.insert(DisplayTable, tostring(v))
+                            end
+                            DropdownFrame.F.Selected.Text = table.concat(DisplayTable, ", ")
                         end
                     else
                         DropdownFrame.F.Selected.Text = (Dropdown.Value == "" or Dropdown.Value == nil) and "..." or tostring(Dropdown.Value)
                     end
                 end
 
+                -- [[ PERBAIKAN UTAMA DI FUNGSI SET ]] --
                 function Dropdown:Set(Value)
                     if DropdownConfig.Multi then
-                        if type(Dropdown.Value) ~= "table" then Dropdown.Value = {} end
-                        local FoundIndex = table.find(Dropdown.Value, Value)
-                        
-                        if FoundIndex then
-                            -- Jika AllowNone false, jangan biarkan menghapus item terakhir
-                            if DropdownConfig.AllowNone or #Dropdown.Value > 1 then
-                                table.remove(Dropdown.Value, FoundIndex)
-                            end
+                        if type(Value) == "table" then
+                            -- Jika input adalah tabel (dari Load Config), langsung ganti isinya
+                            Dropdown.Value = Value
                         else
-                            table.insert(Dropdown.Value, Value)
+                            -- Jika input adalah string (dari klik UI), lakukan Toggle
+                            if type(Dropdown.Value) ~= "table" then Dropdown.Value = {} end
+                            local FoundIndex = table.find(Dropdown.Value, Value)
+                            
+                            if FoundIndex then
+                                if DropdownConfig.AllowNone or #Dropdown.Value > 1 then
+                                    table.remove(Dropdown.Value, FoundIndex)
+                                end
+                            else
+                                table.insert(Dropdown.Value, Value)
+                            end
                         end
                     else
+                        -- Logika Single Select
                         if Dropdown.Value == Value then
-                            -- Hanya deselect jika AllowNone diizinkan
-                            if DropdownConfig.AllowNone then
-                                Dropdown.Value = "" 
-                            end
+                            if DropdownConfig.AllowNone then Dropdown.Value = "" end
                         else
                             Dropdown.Value = Value
                         end
                     end
 
-                    -- Update Visual Tombol & Teks (Tetap sama)
+                    -- Update Visual Tombol
                     for Name, Btn in pairs(Dropdown.Buttons) do
-                        local IsActive = DropdownConfig.Multi and table.find(Dropdown.Value, Name) or (Dropdown.Value == Name)
+                        local IsActive = false
+                        if DropdownConfig.Multi then
+                            IsActive = table.find(Dropdown.Value, Name)
+                        else
+                            IsActive = (Dropdown.Value == Name)
+                        end
+                        
                         TweenService:Create(Btn, TweenInfo.new(.15), {BackgroundTransparency = IsActive and 0 or 1}):Play()
                         TweenService:Create(Btn.Title, TweenInfo.new(.15), {TextTransparency = IsActive and 0 or 0.4}):Play()
                     end
@@ -1490,6 +1506,7 @@ function OrionLib:MakeWindow(WindowConfig)
                 end)
 
                 Dropdown:Refresh(Dropdown.Options, false)
+                Dropdown:Set(Dropdown.Value)
                 UpdateSelectedText()
                 
                 if DropdownConfig.Flag then OrionLib.Flags[DropdownConfig.Flag] = Dropdown end
