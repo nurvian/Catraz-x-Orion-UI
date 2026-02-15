@@ -449,7 +449,7 @@ function OrionLib:MakeNotification(NotificationConfig)
 			BackgroundTransparency = 0.1, -- Sedikit transparan (Glass effect)
 			AutomaticSize = Enum.AutomaticSize.Y,
             ClipsDescendants = false -- Biar shadow/glow kelihatan
-		}), "Second")
+		}), "Second"))
         
         -- 2. OUTLINE (UIStroke) - IKUT TEMA!
         -- Ini kuncinya: AddThemeObject tipe "Stroke"
