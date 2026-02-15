@@ -242,7 +242,7 @@ local function AddThemeObject(Object, Type)
 	return Object
 end    
 
-local function SetTheme()
+function OrionLib:SetTheme() -- Hapus kata 'local', tambah 'OrionLib:'
 	for Name, Type in pairs(OrionLib.ThemeObjects) do
 		for _, Object in pairs(Type) do
 			Object[ReturnProperty(Object)] = OrionLib.Themes[OrionLib.SelectedTheme][Name]
@@ -866,6 +866,7 @@ function OrionLib:MakeWindow(WindowConfig)
 		end    
 
 		AddConnection(TabFrame.MouseButton1Click, function()
+            -- 1. Reset tampilan tombol tab lain (jadi transparan)
 			for _, Tab in next, TabHolder:GetChildren() do
 				if Tab:IsA("TextButton") then
 					Tab.Title.Font = Enum.Font.GothamSemibold
@@ -873,15 +874,28 @@ function OrionLib:MakeWindow(WindowConfig)
 					TweenService:Create(Tab.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {TextTransparency = 0.4}):Play()
 				end    
 			end
+            
+            -- 2. Sembunyikan container tab lama
 			for _, ItemContainer in next, MainWindow:GetChildren() do
 				if ItemContainer.Name == "ItemContainer" then
 					ItemContainer.Visible = false
 				end    
-			end  
+			end
+            
+            -- 3. Highlight tombol tab yang baru diklik
 			TweenService:Create(TabFrame.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0}):Play()
 			TweenService:Create(TabFrame.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
 			TabFrame.Title.Font = Enum.Font.GothamBlack
-			Container.Visible = true   
+			
+            -- 4. ANIMASI MUNCUL CONTAINER (Slide Up Effect)
+			Container.Visible = true
+            Container.Position = UDim2.new(0, 150, 0, 60) -- Mulai dari posisi agak bawah (60px)
+            Container.CanvasGroupTransparency = 1 -- (Opsional: Kalau mau fade in, ubah ScrollFrame jadi CanvasGroup di fungsi CreateElement, tapi Slide Up aja udah cukup bagus)
+            
+            -- Mainkan Tween ke posisi asli (50px)
+            TweenService:Create(Container, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                Position = UDim2.new(0, 150, 0, 50) -- Naik ke posisi normal
+            }):Play()
 		end)
 
 		local function GetElements(ItemParent)
@@ -1726,39 +1740,71 @@ function OrionLib:MakeWindow(WindowConfig)
 		function ElementFunction:AddSection(SectionConfig)
 			SectionConfig.Name = SectionConfig.Name or "Section"
 
+            -- Variable status lipatan
+            local SectionCollapsed = false
+
 			local SectionFrame = SetChildren(SetProps(MakeElement("TFrame"), {
 				Size = UDim2.new(1, 0, 0, 26),
-				Parent = Container
+				Parent = Container,
+				ClipsDescendants = true -- PENTING: Biar isinya kepotong pas dilipat
 			}), {
 				AddThemeObject(SetProps(MakeElement("Label", SectionConfig.Name, 14), {
-					Size = UDim2.new(1, -12, 0, 16),
-					Position = UDim2.new(0, 0, 0, 3),
+					Size = UDim2.new(1, -30, 0, 26), -- Kurangi lebar dikit buat tombol panah
+					Position = UDim2.new(0, 0, 0, 0), -- Geser teks ke tengah vertikal
+                    TextYAlignment = Enum.TextYAlignment.Center, -- Rapihin posisi teks
 					Font = Enum.Font.GothamSemibold
 				}), "TextDark"),
+                
+                -- WADAH ITEM (HOLDER)
 				SetChildren(SetProps(MakeElement("TFrame"), {
 					AnchorPoint = Vector2.new(0, 0),
-					Size = UDim2.new(1, 0, 1, -24),
-					Position = UDim2.new(0, 0, 0, 23),
+					Size = UDim2.new(1, 0, 1, -26),
+					Position = UDim2.new(0, 0, 0, 26),
 					Name = "Holder"
 				}), {
 					MakeElement("List", 0, 6)
 				}),
 			})
+            
+            -- TOMBOL PANAH (Fold Button)
+            local FoldBtn = SetProps(MakeElement("ImageButton", "rbxassetid://3944690667"), { -- Icon panah bawah
+                Parent = SectionFrame,
+                Size = UDim2.new(0, 20, 0, 20),
+                Position = UDim2.new(1, -25, 0, 3), -- Pojok kanan atas
+                ImageColor3 = Color3.fromRGB(150, 150, 150),
+                BackgroundTransparency = 1
+            })
 
+            -- Logika Resize Otomatis
 			AddConnection(SectionFrame.Holder.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-				SectionFrame.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y + 31)
-				SectionFrame.Holder.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y)
+                if not SectionCollapsed then
+				    SectionFrame.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y + 31)
+				    SectionFrame.Holder.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y)
+                end
 			end)
+            
+            -- LOGIKA KLIK TOMBOL LIPAT
+            AddConnection(FoldBtn.MouseButton1Click, function()
+                SectionCollapsed = not SectionCollapsed
+                
+                if SectionCollapsed then
+                    -- Animasi Menutup
+                    TweenService:Create(FoldBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Rotation = -90}):Play() -- Panah muter
+                    TweenService:Create(SectionFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Size = UDim2.new(1, 0, 0, 26)}):Play() -- Tinggi jadi 26 (Header doang)
+                else
+                    -- Animasi Membuka
+                    TweenService:Create(FoldBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Rotation = 0}):Play()
+                    TweenService:Create(SectionFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
+                        Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y + 31)
+                    }):Play()
+                end
+            end)
 
 			local SectionFunction = {}
 			for i, v in next, GetElements(SectionFrame.Holder) do
 				SectionFunction[i] = v 
 			end
 			return SectionFunction
-		end	
-
-		for i, v in next, GetElements(Container) do
-			ElementFunction[i] = v 
 		end
 
 		if TabConfig.PremiumOnly then
