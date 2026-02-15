@@ -793,78 +793,88 @@ function OrionLib:MakeWindow(WindowConfig)
 		end
 	end)
 
-    -- [[ 1. BUAT FLOATING TOGGLE (Taruh di dalam MakeWindow, sebelum MinimizeBtn logic) ]] --
+    -- [[ 1. SET DEFAULT & CHANGEABLE ICON ]] --
+    WindowConfig.ToggleIcon = WindowConfig.ToggleIcon or "rbxassetid://105921924721005"
 
-    -- Note: Radius 100 pada Size 50x50 akan membuatnya menjadi LINGKARAN SEMPURNA.
     local FloatingToggle = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 100), {
-        Size = UDim2.new(0, 50, 0, 50), -- Pastikan ukuran ini KOTAK agar jadi lingkaran
+        Size = UDim2.new(0, 0, 0, 0), -- Mulai dari 0 untuk animasi muncul
         Position = UDim2.new(0.1, 0, 0.5, 0),
         Parent = Orion,
         Visible = false,
         ZIndex = 100,
-        BackgroundTransparency = 0.3, -- Efek Glass gelap
+        BackgroundTransparency = WindowConfig.WindowTransparency or 0.3,
         Active = true,
-        AnchorPoint = Vector2.new(0.5, 0.5) -- Titik pusat di tengah biar rapi saat digeser
+        AnchorPoint = Vector2.new(0.5, 0.5)
     }), {
-        -- A. Outline yang ikut ganti tema
+        -- Outline yang tetap mengikuti tema
         AddThemeObject(MakeElement("Stroke", nil, 2), "Stroke"),
         
-        -- B. FITUR BARU: Highlight Glow (Cahaya Putih di belakang icon)
-        Create("ImageLabel", {
-            Name = "GlowHighlight",
-            BackgroundTransparency = 1,
-            Image = "rbxassetid://5554236805", -- Asset shadow lembut
-            ImageColor3 = Color3.fromRGB(255, 255, 255), -- Warna cahaya PUTIH
-            ImageTransparency = 0.4, -- Atur kecerahan cahaya di sini (makin kecil makin terang)
-            Size = UDim2.new(1.2, 0, 1.2, 0), -- Sedikit lebih besar dari tombolnya
+        -- Icon Utama (Hanya Gambar, Tanpa Glow/Kondimen)
+        SetProps(MakeElement("Image", WindowConfig.ToggleIcon), {
+            Size = UDim2.new(0, 30, 0, 30),
             Position = UDim2.new(0.5, 0, 0.5, 0),
             AnchorPoint = Vector2.new(0.5, 0.5),
-            ZIndex = 100 -- Di belakang icon utama
-        }),
-
-        -- C. Icon Utama (Paten)
-        SetProps(MakeElement("Image", "rbxassetid://128414857095276"), {
-            Size = UDim2.new(0, 28, 0, 28), -- Ukuran icon disesuaikan
-            Position = UDim2.new(0.5, 0, 0.5, 0), -- Posisi TENGAH SEMPURNA
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            ImageColor3 = Color3.fromRGB(255, 255, 255), -- PASTIKAN PUTIH MURNI BIAR CERAH
-            ZIndex = 101 -- Di depan cahaya glow
+            ImageColor3 = Color3.fromRGB(255, 255, 255),
+            Name = "Icon",
+            ZIndex = 101
         }),
         
-        -- D. Tombol transparan buat klik
+        -- Tombol Klik
         SetProps(MakeElement("Button"), {
             Size = UDim2.new(1, 0, 1, 0),
             Name = "ToggleBtn",
-            ZIndex = 102 -- Paling depan biar bisa diklik
+            ZIndex = 102
         })
     }), "Second")
 
-    -- Buat tombol melayangnya bisa digeser (Draggable)
     MakeDraggable(FloatingToggle, FloatingToggle)
 
-    -- [[ 2. UPDATE LOGIKA TOMBOL MINIMIZE WINDOW ]] --
+    -- [[ 2. FUNGSI UNTUK GANTI IMAGE TOGEL SECARA DINAMIS ]] --
+    function OrionLib:ChangeToggleIcon(NewIconID)
+        FloatingToggle.Icon.Image = (string.find(NewIconID, "rbxassetid://") and NewIconID) or "rbxassetid://" .. NewIconID
+    end
 
+    -- [[ 3. ANIMASI MINIMIZE (WINDOW KE TOGGLE) ]] --
     AddConnection(MinimizeBtn.MouseButton1Up, function()
-        -- Sembunyikan Window Utama
-        MainWindow.Visible = false
-        -- Munculkan Tombol Melayang
-        FloatingToggle.Visible = true
-        
-        -- Notifikasi kecil (Opsional)
-        OrionLib:MakeNotification({
-            Name = "Catraz Hub",
-            Content = "UI Minimized. Click the floating icon to reopen.",
-            Time = 2
+        -- Animasi Window mengecil ke posisi Toggle
+        MainWindow.ClipsDescendants = true
+        local Tween = TweenService:Create(MainWindow, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 0, 0, 0),
+            Position = FloatingToggle.Position,
+            BackgroundTransparency = 1
         })
+        Tween:Play()
+        
+        Tween.Completed:Connect(function()
+            MainWindow.Visible = false
+            FloatingToggle.Visible = true
+            -- Animasi Toggle membesar (Bounce effect)
+            TweenService:Create(FloatingToggle, TweenInfo.new(0.4, Enum.EasingStyle.BackOut), {
+                Size = UDim2.new(0, 50, 0, 50)
+            }):Play()
+        end)
     end)
 
-    -- [[ 3. LOGIKA KLIK PADA TOMBOL MELAYANG UNTUK RE-OPEN ]] --
-
+    -- [[ 4. ANIMASI RE-OPEN (TOGGLE KE WINDOW) ]] --
     AddConnection(FloatingToggle.ToggleBtn.MouseButton1Up, function()
-        -- Sembunyikan Tombol Melayang
-        FloatingToggle.Visible = false
-        -- Munculkan Kembali Window Utama
-        MainWindow.Visible = true
+        -- Animasi Toggle mengecil
+        local TweenOut = TweenService:Create(FloatingToggle, TweenInfo.new(0.3, Enum.EasingStyle.BackIn), {
+            Size = UDim2.new(0, 0, 0, 0)
+        })
+        TweenOut:Play()
+        
+        TweenOut.Completed:Connect(function()
+            FloatingToggle.Visible = false
+            MainWindow.Visible = true
+            MainWindow.Position = FloatingToggle.Position -- Mulai muncul dari posisi toggle terakhir
+            
+            -- Animasi Window membesar kembali ke posisi tengah
+            TweenService:Create(MainWindow, TweenInfo.new(0.6, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, 615, 0, 344),
+                Position = UDim2.new(0.5, -307, 0.5, -172),
+                BackgroundTransparency = WindowConfig.WindowTransparency or 0.1
+            }):Play()
+        end)
     end)
 
 	local function LoadSequence()
