@@ -6,7 +6,7 @@
 
 -- 1. LOAD LIBRARY (Ganti Link ini dengan Link Raw GitHub Source Code Modifikasi kamu)
 -- Kalau testing di executor lokal, bisa pakai loadstring(readfile("source.lua"))()
-local OrionLib = loadstring(game:HttpGet("LINK_RAW_GITHUB_SOURCE_CODE_KAMU_DISINI"))()
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/nurvian/Catraz-x-Orion-UI/refs/heads/main/source.lua"))()
 
 -- 2. MEMBUAT WINDOW UTAMA
 local Window = OrionLib:MakeWindow({
