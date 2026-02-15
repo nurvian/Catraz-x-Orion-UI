@@ -793,25 +793,58 @@ function OrionLib:MakeWindow(WindowConfig)
 		end
 	end)
 
-	AddConnection(MinimizeBtn.MouseButton1Up, function()
-		if Minimized then
-			TweenService:Create(MainWindow, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 615, 0, 344)}):Play()
-			MinimizeBtn.Ico.Image = "rbxassetid://7072719338"
-			wait(.02)
-			MainWindow.ClipsDescendants = false
-			WindowStuff.Visible = true
-			WindowTopBarLine.Visible = true
-		else
-			MainWindow.ClipsDescendants = true
-			WindowTopBarLine.Visible = false
-			MinimizeBtn.Ico.Image = "rbxassetid://7072720870"
+    -- [[ 1. BUAT FLOATING TOGGLE (Taruh di dalam MakeWindow, sebelum MinimizeBtn logic) ]] --
 
-			TweenService:Create(MainWindow, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, WindowName.TextBounds.X + 140, 0, 50)}):Play()
-			wait(0.1)
-			WindowStuff.Visible = false	
-		end
-		Minimized = not Minimized    
-	end)
+    local FloatingToggle = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 100), {
+        Size = UDim2.new(0, 50, 0, 50),
+        Position = UDim2.new(0.1, 0, 0.5, 0), -- Posisi awal melayang
+        Parent = Orion,
+        Visible = false,
+        ZIndex = 100,
+        BackgroundTransparency = 0.3, -- Efek Glass
+        Active = true
+    }), {
+        -- Outline yang ikut ganti tema
+        AddThemeObject(MakeElement("Stroke", nil, 2), "Stroke"),
+        -- Icon paten yang kamu minta
+        SetProps(MakeElement("Image", "rbxassetid://128414857095276"), {
+            Size = UDim2.new(0, 30, 0, 30),
+            Position = UDim2.new(0.5, -15, 0.5, -15),
+        }),
+        -- Tombol transparan buat klik
+        SetProps(MakeElement("Button"), {
+            Size = UDim2.new(1, 0, 1, 0),
+            Name = "ToggleBtn"
+        })
+    }), "Second")
+
+    -- Buat tombol melayangnya bisa digeser (Draggable)
+    MakeDraggable(FloatingToggle, FloatingToggle)
+
+    -- [[ 2. UPDATE LOGIKA TOMBOL MINIMIZE WINDOW ]] --
+
+    AddConnection(MinimizeBtn.MouseButton1Up, function()
+        -- Sembunyikan Window Utama
+        MainWindow.Visible = false
+        -- Munculkan Tombol Melayang
+        FloatingToggle.Visible = true
+        
+        -- Notifikasi kecil (Opsional)
+        OrionLib:MakeNotification({
+            Name = "Catraz Hub",
+            Content = "UI Minimized. Click the floating icon to reopen.",
+            Time = 2
+        })
+    end)
+
+    -- [[ 3. LOGIKA KLIK PADA TOMBOL MELAYANG UNTUK RE-OPEN ]] --
+
+    AddConnection(FloatingToggle.ToggleBtn.MouseButton1Up, function()
+        -- Sembunyikan Tombol Melayang
+        FloatingToggle.Visible = false
+        -- Munculkan Kembali Window Utama
+        MainWindow.Visible = true
+    end)
 
 	local function LoadSequence()
 		MainWindow.Visible = false
