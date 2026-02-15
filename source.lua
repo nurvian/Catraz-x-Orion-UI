@@ -795,26 +795,47 @@ function OrionLib:MakeWindow(WindowConfig)
 
     -- [[ 1. BUAT FLOATING TOGGLE (Taruh di dalam MakeWindow, sebelum MinimizeBtn logic) ]] --
 
+    -- Note: Radius 100 pada Size 50x50 akan membuatnya menjadi LINGKARAN SEMPURNA.
     local FloatingToggle = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 100), {
-        Size = UDim2.new(0, 50, 0, 50),
-        Position = UDim2.new(0.1, 0, 0.5, 0), -- Posisi awal melayang
+        Size = UDim2.new(0, 50, 0, 50), -- Pastikan ukuran ini KOTAK agar jadi lingkaran
+        Position = UDim2.new(0.1, 0, 0.5, 0),
         Parent = Orion,
         Visible = false,
         ZIndex = 100,
-        BackgroundTransparency = 0.3, -- Efek Glass
-        Active = true
+        BackgroundTransparency = 0.3, -- Efek Glass gelap
+        Active = true,
+        AnchorPoint = Vector2.new(0.5, 0.5) -- Titik pusat di tengah biar rapi saat digeser
     }), {
-        -- Outline yang ikut ganti tema
+        -- A. Outline yang ikut ganti tema
         AddThemeObject(MakeElement("Stroke", nil, 2), "Stroke"),
-        -- Icon paten yang kamu minta
-        SetProps(MakeElement("Image", "rbxassetid://128414857095276"), {
-            Size = UDim2.new(0, 30, 0, 30),
-            Position = UDim2.new(0.5, -15, 0.5, -15),
+        
+        -- B. FITUR BARU: Highlight Glow (Cahaya Putih di belakang icon)
+        Create("ImageLabel", {
+            Name = "GlowHighlight",
+            BackgroundTransparency = 1,
+            Image = "rbxassetid://5554236805", -- Asset shadow lembut
+            ImageColor3 = Color3.fromRGB(255, 255, 255), -- Warna cahaya PUTIH
+            ImageTransparency = 0.4, -- Atur kecerahan cahaya di sini (makin kecil makin terang)
+            Size = UDim2.new(1.2, 0, 1.2, 0), -- Sedikit lebih besar dari tombolnya
+            Position = UDim2.new(0.5, 0, 0.5, 0),
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            ZIndex = 100 -- Di belakang icon utama
         }),
-        -- Tombol transparan buat klik
+
+        -- C. Icon Utama (Paten)
+        SetProps(MakeElement("Image", "rbxassetid://128414857095276"), {
+            Size = UDim2.new(0, 28, 0, 28), -- Ukuran icon disesuaikan
+            Position = UDim2.new(0.5, 0, 0.5, 0), -- Posisi TENGAH SEMPURNA
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            ImageColor3 = Color3.fromRGB(255, 255, 255), -- PASTIKAN PUTIH MURNI BIAR CERAH
+            ZIndex = 101 -- Di depan cahaya glow
+        }),
+        
+        -- D. Tombol transparan buat klik
         SetProps(MakeElement("Button"), {
             Size = UDim2.new(1, 0, 1, 0),
-            Name = "ToggleBtn"
+            Name = "ToggleBtn",
+            ZIndex = 102 -- Paling depan biar bisa diklik
         })
     }), "Second")
 
