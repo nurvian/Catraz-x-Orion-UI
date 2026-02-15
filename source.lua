@@ -975,16 +975,7 @@ function OrionLib:MakeWindow(WindowConfig)
             Parent = BGImage
         })
 	end
-
-	if WindowConfig.ShowIcon then
-		WindowName.Position = UDim2.new(0, 50, 0, -24)
-		local WindowIcon = SetProps(MakeElement("Image", WindowConfig.Icon), {
-			Size = UDim2.new(0, 20, 0, 20),
-			Position = UDim2.new(0, 25, 0, 15)
-		})
-		WindowIcon.Parent = MainWindow.TopBar
-	end	
-
+    -- HAPUS BIANGKEROKNYA
     -- [[ SOURCE.LUA - UPDATE CLOSE BUTTON ]] --
     AddConnection(CloseBtn.MouseButton1Up, function()
         OrionLib:AddDialog({
