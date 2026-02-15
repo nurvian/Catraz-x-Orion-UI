@@ -2077,12 +2077,12 @@ function OrionLib:MakeWindow(WindowConfig)
 			})
 		end
 
-        -- [[ SOURCE.LUA - PRO CONFIG MANAGER EDITION ]] --
+        -- [[ SOURCE.LUA - FINAL PRO CONFIG MANAGER ]] --
 
         function TabFunction:AddConfigTab(ConfigConfig)
             ConfigConfig = ConfigConfig or {}
             local SelectedConfig = nil
-            local NewConfigName = ""
+            local NewConfigName = "Default"
             local ImportURL = ""
             local ImportFileName = ""
 
@@ -2091,14 +2091,14 @@ function OrionLib:MakeWindow(WindowConfig)
                 Icon = ConfigConfig.Icon or "database"
             })
 
-            -- FUNGSI HELPER: Refresh Daftar File
+            -- FUNGSI HELPER: Ambil Daftar File (Hanya Nama)
             local function GetConfigList()
                 local List = {}
                 if isfolder(OrionLib.Folder) then
                     for _, File in ipairs(listfiles(OrionLib.Folder)) do
-                        -- Filter hanya file .txt (Format config Orion)
-                        local Name = File:gsub(OrionLib.Folder .. "/", ""):gsub(".txt", "")
-                        if Name ~= "AutoLoad" then -- Jangan masukkan file penanda AutoLoad
+                        -- Mengambil nama file saja tanpa path dan tanpa .txt
+                        local Name = File:match("([^\\/]+)%.txt$")
+                        if Name and Name ~= "AutoLoad" then 
                             table.insert(List, Name)
                         end
                     end
@@ -2121,7 +2121,7 @@ function OrionLib:MakeWindow(WindowConfig)
                 Callback = function()
                     if NewConfigName ~= "" then
                         SaveCfg(NewConfigName)
-                        ConfigTab:RefreshAllDropdowns() -- Refresh list otomatis
+                        ConfigTab:RefreshAllDropdowns()
                         OrionLib:MakeNotification({ Name = "Success", Content = "Config '"..NewConfigName.."' Created!", Time = 3 })
                     end
                 end
@@ -2138,7 +2138,7 @@ function OrionLib:MakeWindow(WindowConfig)
                 Callback = function()
                     if SelectedConfig and SelectedConfig ~= "" then
                         SaveCfg(SelectedConfig)
-                        OrionLib:MakeNotification({ Name = "Config", Content = "Updated '"..SelectedConfig.."' with current settings!", Time = 3 })
+                        OrionLib:MakeNotification({ Name = "Config", Content = "Updated '"..SelectedConfig.."'!", Time = 3 })
                     end
                 end
             })
@@ -2158,9 +2158,7 @@ function OrionLib:MakeWindow(WindowConfig)
                     if SelectedConfig then
                         local Path = OrionLib.Folder .. "/" .. SelectedConfig .. ".txt"
                         if isfile(Path) then
-                            -- FIX: LoadCfg butuh isi filenya
-                            local Content = readfile(Path)
-                            LoadCfg(Content) 
+                            LoadCfg(readfile(Path)) -- Memuat isi file
                             OrionLib:MakeNotification({ Name = "Success", Content = "Config '"..SelectedConfig.."' Loaded!", Time = 3 })
                         end
                     end
@@ -2173,9 +2171,10 @@ function OrionLib:MakeWindow(WindowConfig)
                     if SelectedConfig then
                         local Path = OrionLib.Folder .. "/" .. SelectedConfig .. ".txt"
                         if isfile(Path) then
-                            delfile(Path) -- Menghapus file
+                            delfile(Path) -- Menghapus file permanen
                             ConfigTab:RefreshAllDropdowns()
                             OrionLib:MakeNotification({ Name = "Deleted", Content = "File removed.", Time = 3 })
+                            SelectedConfig = nil
                         end
                     end
                 end
@@ -2190,8 +2189,7 @@ function OrionLib:MakeWindow(WindowConfig)
                     if SelectedConfig then
                         local Path = OrionLib.Folder .. "/" .. SelectedConfig .. ".txt"
                         if isfile(Path) then
-                            -- FIX: setclipboard untuk ekspor
-                            setclipboard(readfile(Path))
+                            setclipboard(readfile(Path)) -- Salin data JSON ke clipboard
                             OrionLib:MakeNotification({ Name = "Export", Content = "JSON copied to clipboard!", Time = 3 })
                         end
                     end
@@ -2251,7 +2249,7 @@ function OrionLib:MakeWindow(WindowConfig)
             -- FUNGSI INTERNAL: Refresh Dropdown
             function ConfigTab:RefreshAllDropdowns()
                 local NewList = GetConfigList()
-                LoadDropdown:Refresh(NewList, true)
+                LoadDropdown:Refresh(NewList, true) -- Refresh opsi dropdown
                 OverwriteDropdown:Refresh(NewList, true)
             end
 
