@@ -834,10 +834,10 @@ function OrionLib:MakeWindow(WindowConfig)
         FloatingToggle.Icon.Image = (string.find(NewIconID, "rbxassetid://") and NewIconID) or "rbxassetid://" .. NewIconID
     end
 
-    -- [[ 3. ANIMASI MINIMIZE (WINDOW KE TOGGLE) ]] --
+    -- [[ 3. ANIMASI MINIMIZE (WINDOW KE TOGGLE) NEW ]] --
     AddConnection(MinimizeBtn.MouseButton1Up, function()
-        -- Animasi Window mengecil ke posisi Toggle
         MainWindow.ClipsDescendants = true
+        -- Perbaikan: Enum.EasingStyle.BackOut -> Enum.EasingStyle.Back
         local Tween = TweenService:Create(MainWindow, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
             Size = UDim2.new(0, 0, 0, 0),
             Position = FloatingToggle.Position,
@@ -848,17 +848,17 @@ function OrionLib:MakeWindow(WindowConfig)
         Tween.Completed:Connect(function()
             MainWindow.Visible = false
             FloatingToggle.Visible = true
-            -- Animasi Toggle membesar (Bounce effect)
-            TweenService:Create(FloatingToggle, TweenInfo.new(0.4, Enum.EasingStyle.BackOut), {
+            -- Perbaikan EasingStyle di sini
+            TweenService:Create(FloatingToggle, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
                 Size = UDim2.new(0, 50, 0, 50)
             }):Play()
         end)
     end)
 
-    -- [[ 4. ANIMASI RE-OPEN (TOGGLE KE WINDOW) ]] --
+    -- [[ 4. ANIMASI RE-OPEN (TOGGLE KE WINDOW) NEW ]] --
     AddConnection(FloatingToggle.ToggleBtn.MouseButton1Up, function()
-        -- Animasi Toggle mengecil
-        local TweenOut = TweenService:Create(FloatingToggle, TweenInfo.new(0.3, Enum.EasingStyle.BackIn), {
+        -- Perbaikan EasingStyle di sini juga
+        local TweenOut = TweenService:Create(FloatingToggle, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
             Size = UDim2.new(0, 0, 0, 0)
         })
         TweenOut:Play()
@@ -866,9 +866,8 @@ function OrionLib:MakeWindow(WindowConfig)
         TweenOut.Completed:Connect(function()
             FloatingToggle.Visible = false
             MainWindow.Visible = true
-            MainWindow.Position = FloatingToggle.Position -- Mulai muncul dari posisi toggle terakhir
+            MainWindow.Position = FloatingToggle.Position 
             
-            -- Animasi Window membesar kembali ke posisi tengah
             TweenService:Create(MainWindow, TweenInfo.new(0.6, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
                 Size = UDim2.new(0, 615, 0, 344),
                 Position = UDim2.new(0.5, -307, 0.5, -172),
