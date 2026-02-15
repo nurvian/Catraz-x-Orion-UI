@@ -866,7 +866,7 @@ function OrionLib:MakeWindow(WindowConfig)
 		end    
 
 		AddConnection(TabFrame.MouseButton1Click, function()
-            -- 1. Reset tampilan tombol tab lain (jadi transparan)
+			-- 1. Reset tampilan tombol tab lain (jadi transparan/gelap)
 			for _, Tab in next, TabHolder:GetChildren() do
 				if Tab:IsA("TextButton") then
 					Tab.Title.Font = Enum.Font.GothamSemibold
@@ -874,28 +874,27 @@ function OrionLib:MakeWindow(WindowConfig)
 					TweenService:Create(Tab.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {TextTransparency = 0.4}):Play()
 				end    
 			end
-            
-            -- 2. Sembunyikan container tab lama
+			
+			-- 2. Sembunyikan container tab lama
 			for _, ItemContainer in next, MainWindow:GetChildren() do
 				if ItemContainer.Name == "ItemContainer" then
 					ItemContainer.Visible = false
 				end    
 			end
-            
-            -- 3. Highlight tombol tab yang baru diklik
+			
+			-- 3. Highlight tombol tab yang baru diklik (jadi terang)
 			TweenService:Create(TabFrame.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0}):Play()
 			TweenService:Create(TabFrame.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
 			TabFrame.Title.Font = Enum.Font.GothamBlack
 			
-            -- 4. ANIMASI MUNCUL CONTAINER (Slide Up Effect)
+			-- 4. ANIMASI SLIDE UP (Perbaikan: Tanpa CanvasGroupTransparency)
 			Container.Visible = true
-            Container.Position = UDim2.new(0, 150, 0, 60) -- Mulai dari posisi agak bawah (60px)
-            Container.CanvasGroupTransparency = 1 -- (Opsional: Kalau mau fade in, ubah ScrollFrame jadi CanvasGroup di fungsi CreateElement, tapi Slide Up aja udah cukup bagus)
-            
-            -- Mainkan Tween ke posisi asli (50px)
-            TweenService:Create(Container, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                Position = UDim2.new(0, 150, 0, 50) -- Naik ke posisi normal
-            }):Play()
+			Container.Position = UDim2.new(0, 150, 0, 75) -- Mulai dari posisi agak bawah (75px)
+			
+			-- Mainkan Tween ke posisi asli (50px) dengan gaya membal sedikit (Back Easing) biar mulus
+			TweenService:Create(Container, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+				Position = UDim2.new(0, 150, 0, 50) -- Naik ke posisi normal
+			}):Play()
 		end)
 
 		local function GetElements(ItemParent)
