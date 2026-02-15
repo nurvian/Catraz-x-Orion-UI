@@ -500,20 +500,20 @@ function OrionLib:AddDialog(Config)
     -- Judul & Konten
     local TitleLabel = Create("TextLabel", {
         Parent = DialogFrame, BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 40),
-        Position = UDim2.new(0, 0, 0, 15), Text = Config.Title, TextColor3 = Color3.fromRGB(255, 255, 255),
+        Position = UDim2.new(0, 0, 0, 10), Text = Config.Title, TextColor3 = Color3.fromRGB(255, 255, 255),
         TextSize = 18, Font = Enum.Font.GothamBold, ZIndex = 5002
     })
 
     local ContentLabel = Create("TextLabel", {
         Parent = DialogFrame, BackgroundTransparency = 1, Size = UDim2.new(1, -40, 0, 45),
-        Position = UDim2.new(0, 20, 0, 50), Text = Config.Content, TextColor3 = Color3.fromRGB(200, 200, 200),
+        Position = UDim2.new(0, 20, 0, 42), Text = Config.Content, TextColor3 = Color3.fromRGB(200, 200, 200),
         TextSize = 13, Font = Enum.Font.Gotham, TextWrapped = true, ZIndex = 5002
     })
 
     -- Tombol YES
     local YesBtn = AddThemeObject(SetProps(MakeElement("RoundFrame", Color3.fromRGB(200, 40, 40), 0, 6), {
         Size = UDim2.new(0, 110, 0, 35),
-        Position = UDim2.new(0.5, -120, 0.75, 0), -- Posisi eksplisit
+        Position = UDim2.new(0.5, -120, 0.9, 0), -- Posisi eksplisit
         Parent = DialogFrame, ZIndex = 5003
     }), "Stroke")
 
@@ -526,7 +526,7 @@ function OrionLib:AddDialog(Config)
     -- Tombol NO
     local NoBtn = AddThemeObject(SetProps(MakeElement("RoundFrame", Color3.fromRGB(45, 45, 45), 0, 6), {
         Size = UDim2.new(0, 110, 0, 35),
-        Position = UDim2.new(0.5, 10, 0.75, 0),
+        Position = UDim2.new(0.5, 10, 0.9, 0),
         Parent = DialogFrame, ZIndex = 5003
     }), "Divider")
 
