@@ -1865,50 +1865,47 @@ function OrionLib:MakeWindow(WindowConfig)
 			})
 		end
 
-        -- [[ SOURCE.LUA - TAMBAHKAN DI DALAM MAKEWINDOW ]] --
+    -- [[ TAMBAHKAN KODE INI SEBELUM return TabFunction ]] --
 
-        function TabFunction:AddConfigTab(ConfigConfig)
-            ConfigConfig = ConfigConfig or {}
-            
-            -- 1. Buat Tab Otomatis
-            local ConfigTab = self:MakeTab({
-                Name = ConfigConfig.Name or "Config",
-                Icon = ConfigConfig.Icon or "settings" -- Menggunakan sistem icon kamu
-            })
+	function TabFunction:AddConfigTab(ConfigConfig)
+		ConfigConfig = ConfigConfig or {}
+		
+		-- 1. Buat Tab Otomatis
+		local ConfigTab = self:MakeTab({
+			Name = ConfigConfig.Name or "Config",
+			Icon = ConfigConfig.Icon or "settings" 
+		})
 
-            local Section = ConfigTab:AddSection({
-                Name = "Configuration Management"
-            })
+		local Section = ConfigTab:AddSection({
+			Name = "Configuration Management"
+		})
 
-            -- 2. Tombol Simpan Konfigurasi
-            Section:AddButton({
-                Name = "Save Current Config",
-                Callback = function()
-                    -- Fungsi SaveCfg sudah ada di bagian atas source.lua kamu
-                    SaveCfg(game.GameId) 
-                    OrionLib:MakeNotification({
-                        Name = "Config System",
-                        Content = "Configuration has been saved successfully!",
-                        Time = 3,
-                        Image = "check"
-                    })
-                end
-            })
+		-- 2. Tombol Simpan
+		Section:AddButton({
+			Name = "Save Current Config",
+			Callback = function()
+				SaveCfg(game.GameId) 
+				OrionLib:MakeNotification({
+					Name = "Config System",
+					Content = "Configuration has been saved successfully!",
+					Time = 3,
+					Image = "check"
+				})
+			end
+		})
 
-            -- 3. Toggle Auto Load
-            -- Mengatur apakah OrionLib:Init() akan memuat config secara otomatis
-            Section:AddToggle({
-                Name = "Auto Load on Startup",
-                Default = OrionLib.SaveCfg, -- Default mengambil dari setting window
-                Callback = function(Value)
-                    OrionLib.SaveCfg = Value
-                    -- Agar status Auto Load ini tersimpan, kita simpan config-nya
-                    SaveCfg(game.GameId) 
-                end
-            })
+		-- 3. Toggle Auto Load
+		Section:AddToggle({
+			Name = "Auto Load on Startup",
+			Default = OrionLib.SaveCfg, 
+			Callback = function(Value)
+				OrionLib.SaveCfg = Value
+				SaveCfg(game.GameId) 
+			end
+		})
 
-            return ConfigTab
-        end
+		return ConfigTab
+	end
 		
 		return TabFunctions 
 	end
