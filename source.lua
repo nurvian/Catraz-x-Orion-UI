@@ -678,19 +678,32 @@ function OrionLib:MakeNotification(NotificationConfig)
 end
 
 function OrionLib:Init()
-	if OrionLib.SaveCfg then	
-		pcall(function()
-			if isfile(OrionLib.Folder .. "/" .. game.GameId .. ".txt") then
-				LoadCfg(readfile(OrionLib.Folder .. "/" .. game.GameId .. ".txt"))
-				OrionLib:MakeNotification({
-					Name = "Configuration",
-					Content = "Auto-loaded configuration for the game " .. game.GameId .. ".",
-					Time = 5
-				})
-			end
-		end)		
-	end	
-end	
+    -- Cek Sistem Auto Load Per File
+    local AutoLoadPath = OrionLib.Folder .. "/AutoLoad.txt"
+    if isfile(AutoLoadPath) then
+        local TargetConfig = readfile(AutoLoadPath)
+        local ConfigPath = OrionLib.Folder .. "/" .. TargetConfig .. ".txt"
+        
+        if isfile(ConfigPath) then
+            pcall(function()
+                LoadCfg(readfile(ConfigPath))
+                OrionLib:MakeNotification({
+                    Name = "Auto Load",
+                    Content = "Successfully loaded '" .. TargetConfig .. "' config.",
+                    Time = 5
+                })
+            end)
+        end
+    -- Jika tidak ada AutoLoad.txt, cek sistem lama (GameId)
+    elseif OrionLib.SaveCfg then	
+        pcall(function()
+            local Path = OrionLib.Folder .. "/" .. game.GameId .. ".txt"
+            if isfile(Path) then
+                LoadCfg(readfile(Path))
+            end
+        end)		
+    end	
+end
 
 function OrionLib:MakeWindow(WindowConfig)
     local FirstTab = true
@@ -2081,128 +2094,184 @@ function OrionLib:MakeWindow(WindowConfig)
 			})
 		end
 
-    -- [[ SOURCE.LUA - ADVANCED CONFIG MANAGEMENT ]] --
+        -- [[ SOURCE.LUA - PRO CONFIG MANAGER EDITION ]] --
 
-    function TabFunction:AddConfigTab(ConfigConfig)
-        ConfigConfig = ConfigConfig or {}
-        local CurrentConfigName = ""
-        local SelectedFile = ""
+        function TabFunction:AddConfigTab(ConfigConfig)
+            ConfigConfig = ConfigConfig or {}
+            local SelectedConfig = nil
+            local NewConfigName = ""
+            local ImportURL = ""
+            local ImportFileName = ""
 
-        local ConfigTab = self:MakeTab({
-            Name = ConfigConfig.Name or "Config",
-            Icon = ConfigConfig.Icon or "settings"
-        })
+            local ConfigTab = self:MakeTab({
+                Name = ConfigConfig.Name or "Config",
+                Icon = ConfigConfig.Icon or "database"
+            })
 
-        -- SECTION 1: CREATE & SAVE
-        local CreateSection = ConfigTab:AddSection({ Name = "Create & Save" })
-
-        CreateSection:AddTextbox({
-            Name = "Config Name",
-            Default = "",
-            TextDisappear = false,
-            Callback = function(Value)
-                CurrentConfigName = Value
-            end
-        })
-
-        CreateSection:AddButton({
-            Name = "Save / Overwrite Config",
-            Callback = function()
-                if CurrentConfigName ~= "" then
-                    SaveCfg(CurrentConfigName)
-                    OrionLib:MakeNotification({
-                        Name = "Config System",
-                        Content = "Config '" .. CurrentConfigName .. "' saved/overwritten!",
-                        Time = 3,
-                        Image = "check"
-                    })
-                else
-                    OrionLib:MakeNotification({ Name = "Error", Content = "Please enter a name!", Time = 3 })
+            -- FUNGSI HELPER: Refresh Daftar File
+            local function GetConfigList()
+                local List = {}
+                if isfolder(OrionLib.Folder) then
+                    for _, File in ipairs(listfiles(OrionLib.Folder)) do
+                        -- Filter hanya file .txt (Format config Orion)
+                        local Name = File:gsub(OrionLib.Folder .. "/", ""):gsub(".txt", "")
+                        if Name ~= "AutoLoad" then -- Jangan masukkan file penanda AutoLoad
+                            table.insert(List, Name)
+                        end
+                    end
                 end
+                return List
             end
-        })
 
-        -- SECTION 2: LOAD & MANAGE FILES
-        local FileSection = ConfigTab:AddSection({ Name = "File Manager" })
+            -- SECTION 1: CREATE & OVERWRITE
+            local CreateSection = ConfigTab:AddSection({ Name = "Create & Overwrite" })
 
-        local FileList = FileSection:AddDropdown({
-            Name = "Existing Configs",
-            Default = "None",
-            Options = {}, -- Akan diisi otomatis
-            Search = true,
-            Callback = function(Value)
-                SelectedFile = Value
-            end
-        })
+            CreateSection:AddTextbox({
+                Name = "New Config Name",
+                Default = "Default",
+                TextDisappear = false,
+                Callback = function(Value) NewConfigName = Value end
+            })
 
-        -- Fungsi buat refresh daftar file di folder
-        local function RefreshFiles()
-            local Files = {}
-            if isfolder(OrionLib.Folder) then
-                for _, File in ipairs(listfiles(OrionLib.Folder)) do
-                    -- Ambil nama filenya aja, buang path-nya
-                    local Name = File:gsub(OrionLib.Folder .. "/", ""):gsub(".txt", "")
-                    table.insert(Files, Name)
+            CreateSection:AddButton({
+                Name = "Create & Save New",
+                Callback = function()
+                    if NewConfigName ~= "" then
+                        SaveCfg(NewConfigName)
+                        ConfigTab:RefreshAllDropdowns() -- Refresh list otomatis
+                        OrionLib:MakeNotification({ Name = "Success", Content = "Config '"..NewConfigName.."' Created!", Time = 3 })
+                    end
                 end
+            })
+
+            local OverwriteDropdown = CreateSection:AddDropdown({
+                Name = "Select to Overwrite",
+                Options = GetConfigList(),
+                Callback = function(Value) SelectedConfig = Value end
+            })
+
+            CreateSection:AddButton({
+                Name = "Overwrite Selected",
+                Callback = function()
+                    if SelectedConfig and SelectedConfig ~= "" then
+                        SaveCfg(SelectedConfig)
+                        OrionLib:MakeNotification({ Name = "Config", Content = "Updated '"..SelectedConfig.."' with current settings!", Time = 3 })
+                    end
+                end
+            })
+
+            -- SECTION 2: LOAD & DELETE
+            local LoadSection = ConfigTab:AddSection({ Name = "Load & Manage" })
+
+            local LoadDropdown = LoadSection:AddDropdown({
+                Name = "Select Config",
+                Options = GetConfigList(),
+                Callback = function(Value) SelectedConfig = Value end
+            })
+
+            LoadSection:AddButton({
+                Name = "Load Selected",
+                Callback = function()
+                    if SelectedConfig then
+                        local Path = OrionLib.Folder .. "/" .. SelectedConfig .. ".txt"
+                        if isfile(Path) then
+                            LoadCfg(readfile(Path))
+                            OrionLib:MakeNotification({ Name = "Success", Content = "Config '"..SelectedConfig.."' Loaded!", Time = 3 })
+                        end
+                    end
+                end
+            })
+
+            LoadSection:AddButton({
+                Name = "Delete Selected",
+                Callback = function()
+                    if SelectedConfig then
+                        local Path = OrionLib.Folder .. "/" .. SelectedConfig .. ".txt"
+                        if isfile(Path) then
+                            delfile(Path)
+                            ConfigTab:RefreshAllDropdowns()
+                            OrionLib:MakeNotification({ Name = "Deleted", Content = "File removed.", Time = 3 })
+                        end
+                    end
+                end
+            })
+
+            -- SECTION 3: EXPORT & IMPORT (Cloud System)
+            local CloudSection = ConfigTab:AddSection({ Name = "Cloud Share" })
+
+            CloudSection:AddButton({
+                Name = "Export Selected to Clipboard",
+                Callback = function()
+                    if SelectedConfig then
+                        local Path = OrionLib.Folder .. "/" .. SelectedConfig .. ".txt"
+                        if isfile(Path) then
+                            setclipboard(readfile(Path))
+                            OrionLib:MakeNotification({ Name = "Export", Content = "JSON Config copied to clipboard!", Time = 3 })
+                        end
+                    end
+                end
+            })
+
+            CloudSection:AddTextbox({
+                Name = "Import Raw URL (Pastebin/GitHub)",
+                Placeholder = "https://...",
+                Callback = function(V) ImportURL = V end
+            })
+
+            CloudSection:AddTextbox({
+                Name = "Save Imported As...",
+                Placeholder = "FriendConfig",
+                Callback = function(V) ImportFileName = V end
+            })
+
+            CloudSection:AddButton({
+                Name = "Download & Import",
+                Callback = function()
+                    if ImportURL ~= "" and ImportFileName ~= "" then
+                        local Success, Response = pcall(function() return game:HttpGet(ImportURL) end)
+                        if Success and Response:sub(1,1) == "{" then
+                            writefile(OrionLib.Folder .. "/" .. ImportFileName .. ".txt", Response)
+                            ConfigTab:RefreshAllDropdowns()
+                            OrionLib:MakeNotification({ Name = "Success", Content = "Config Downloaded!", Time = 3 })
+                        else
+                            OrionLib:MakeNotification({ Name = "Error", Content = "Invalid URL or Data!", Time = 3 })
+                        end
+                    end
+                end
+            })
+
+            -- SECTION 4: AUTO LOAD SETTINGS
+            local AutoSection = ConfigTab:AddSection({ Name = "Startup Settings" })
+
+            AutoSection:AddButton({
+                Name = "Set Selected as Auto Load",
+                Callback = function()
+                    if SelectedConfig then
+                        writefile(OrionLib.Folder .. "/AutoLoad.txt", SelectedConfig)
+                        OrionLib:MakeNotification({ Name = "Auto Load", Content = SelectedConfig .. " will load next time!", Time = 3 })
+                    end
+                end
+            })
+
+            AutoSection:AddButton({
+                Name = "Disable Auto Load",
+                Callback = function()
+                    if isfile(OrionLib.Folder .. "/AutoLoad.txt") then
+                        delfile(OrionLib.Folder .. "/AutoLoad.txt")
+                        OrionLib:MakeNotification({ Name = "Auto Load", Content = "Disabled.", Time = 3 })
+                    end
+                end
+            })
+
+            -- Fungsi Internal untuk Refresh Dropdown
+            function ConfigTab:RefreshAllDropdowns()
+                local NewList = GetConfigList()
+                LoadDropdown:Refresh(NewList, true)
+                OverwriteDropdown:Refresh(NewList, true)
             end
-            FileList:Refresh(Files, true)
+
+            return ConfigTab
         end
-
-        FileSection:AddButton({
-            Name = "Refresh File List",
-            Callback = RefreshFiles
-        })
-
-        FileSection:AddButton({
-            Name = "Load Selected Config",
-            Callback = function()
-                if SelectedFile ~= "" and SelectedFile ~= "None" then
-                    local Path = OrionLib.Folder .. "/" .. SelectedFile .. ".txt"
-                    if isfile(Path) then
-                        LoadCfg(readfile(Path))
-                        OrionLib:MakeNotification({ Name = "Success", Content = "Loaded: " .. SelectedFile, Time = 3 })
-                    end
-                end
-            end
-        })
-
-        -- SECTION 3: IMPORT & EXPORT
-        local ExternalSection = ConfigTab:AddSection({ Name = "Import & Export" })
-
-        ExternalSection:AddButton({
-            Name = "Export Selected to Clipboard (.json)",
-            Callback = function()
-                if SelectedFile ~= "" and SelectedFile ~= "None" then
-                    local Path = OrionLib.Folder .. "/" .. SelectedFile .. ".txt"
-                    if isfile(Path) then
-                        setclipboard(readfile(Path)) -- Salin isi file ke clipboard
-                        OrionLib:MakeNotification({ Name = "Export", Content = "JSON copied to clipboard!", Time = 3 })
-                    end
-                end
-            end
-        })
-
-        ExternalSection:AddTextbox({
-            Name = "Import Raw JSON",
-            Default = "",
-            TextDisappear = true,
-            Callback = function(Value)
-                if Value ~= "" then
-                    local Success, Err = pcall(function()
-                        LoadCfg(Value) -- Langsung load dari string JSON
-                    end)
-                    if Success then
-                        OrionLib:MakeNotification({ Name = "Import", Content = "Raw config applied!", Time = 3 })
-                    else
-                        OrionLib:MakeNotification({ Name = "Error", Content = "Invalid JSON Data!", Time = 3 })
-                    end
-                end
-            end
-        })
-
-        RefreshFiles() -- Load daftar file pertama kali
-        return ConfigTab
-    end
 		
 		return TabFunctions 
 	end
