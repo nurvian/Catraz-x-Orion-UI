@@ -69,11 +69,6 @@ local function GetIcon(Name)
     return nil
 end
 
--- Wrapper Function biar connect sama logika Orion kamu
-local function GetIcon(Name)
-    return IconModule.GetIcon(Name)
-end
-
 local Orion = Instance.new("ScreenGui")
 Orion.Name = "Orion"
 if syn then
