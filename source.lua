@@ -573,11 +573,11 @@ function OrionLib:AddDialog(Config)
         ZIndex = 504
     })
 
-    -- [[ ANIMASI MASUK ]] --
-    DialogFrame.UIScale = Create("UIScale", { Parent = DialogFrame, Scale = 0 }) -- Gunakan UIScale untuk animasi
+    - [[ ANIMASI MASUK - FIXED ]] --
+    local DialogScale = Create("UIScale", { Parent = DialogFrame, Scale = 0 }) 
     
     TweenService:Create(DialogOverlay, TweenInfo.new(0.3), {BackgroundTransparency = 0.5}):Play()
-    TweenService:Create(DialogFrame.UIScale, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
+    TweenService:Create(DialogScale, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
 
     -- [[ EVENT CLICK ]] --
     YesClick.MouseButton1Up:Connect(function()
@@ -586,7 +586,8 @@ function OrionLib:AddDialog(Config)
     end)
 
     NoClick.MouseButton1Up:Connect(function()
-        local TweenOut = TweenService:Create(DialogFrame.UIScale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Scale = 0})
+        -- Gunakan DialogScale di sini juga
+        local TweenOut = TweenService:Create(DialogScale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Scale = 0})
         TweenService:Create(DialogOverlay, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
         TweenOut:Play()
         TweenOut.Completed:Connect(function() DialogOverlay:Destroy() end)
@@ -889,7 +890,7 @@ function OrionLib:MakeWindow(WindowConfig)
         Position = DefaultPos, -- Menggunakan variabel dari auto-detect
         Size = DefaultSize,    -- Menggunakan variabel dari auto-detect
         ClipsDescendants = true,
-        BackgroundTransparency = WindowConfig.WindowTransparency
+        BackgroundTransparency = WindowConfig.WindowTransparency or 0.1
     }), {
         -- [[ TOPBAR ]] --
         SetChildren(SetProps(MakeElement("TFrame"), {
@@ -920,7 +921,7 @@ function OrionLib:MakeWindow(WindowConfig)
             Position = UDim2.new(1, -18, 1, -18), -- Pojok kanan bawah
             Size = UDim2.new(0, 18, 0, 18),
             BackgroundTransparency = 1,
-            Image = "rbxassetid://6073489112", -- Icon resize segitiga
+            Image = "rbxassetid://136255899715930", -- Icon resize segitiga
             ImageColor3 = Color3.fromRGB(255, 255, 255),
             ImageTransparency = 0.5,
             ZIndex = 10,
