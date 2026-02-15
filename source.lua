@@ -829,15 +829,13 @@ function OrionLib:MakeWindow(WindowConfig)
     
     -- [[ 1. SIAPKAN WINDOW NAME ]] --
     local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Name, 18), {
-        -- Gunakan AnchorPoint agar posisi 0.5 benar-benar di tengah
-        AnchorPoint = Vector2.new(0, 0.5), 
-        -- Gunakan Scale 0.5 (Tengah Vertikal) dengan Offset 0 atau sedikit penyesuaian
-        Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, 0), 
-        Size = UDim2.new(0, 0, 0, 30), -- Tinggi tetap yang masuk akal
+        AnchorPoint = Vector2.new(0, 0.5), -- Titik pusat di tengah vertikal
+        Position = UDim2.new(0, (WindowConfig.ShowIcon and 55 or 25), 0.5, 0), -- Posisikan di tengah TopBar
+        Size = UDim2.new(0, 0, 0, 30),
         Font = Enum.Font.GothamBlack,
-        Text = WindowConfig.Name, -- Memastikan properti teks terisi
+        Text = WindowConfig.Name,
         Name = "Title",
-        ZIndex = 50, -- Pastikan di atas segalanya
+        ZIndex = 50, -- Pastikan di atas background
         AutomaticSize = Enum.AutomaticSize.X
     }), "Text")
 
@@ -930,6 +928,7 @@ function OrionLib:MakeWindow(WindowConfig)
     WindowName.Text = WindowConfig.Name
     WindowSubtext.Text = WindowConfig.Subtext
 
+    -- Logika Ikon yang BENAR (Baris 793)
     if WindowConfig.ShowIcon then
         local WindowIcon = SetProps(MakeElement("Image", WindowConfig.Icon), {
             Parent = MainWindow.TopBar,
