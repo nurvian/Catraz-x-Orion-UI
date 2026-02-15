@@ -427,7 +427,7 @@ local NotificationHolder = SetProps(SetChildren(MakeElement("TFrame"), {
 	Parent = Orion
 })
 
--- [[ SOURCE.LUA - REUSABLE DIALOG SYSTEM ]] --
+-- [[ SOURCE.LUA - FIXED DIALOG (NO MORE BLANK BOX) ]] --
 
 function OrionLib:AddDialog(Config)
     Config = Config or {}
@@ -437,7 +437,6 @@ function OrionLib:AddDialog(Config)
     Config.NoText = Config.NoText or "No"
     Config.Callback = Config.Callback or function() end
 
-    -- Overlay (Penghalang klik ke belakang)
     local DialogOverlay = Create("Frame", {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundColor3 = Color3.fromRGB(0, 0, 0),
@@ -447,81 +446,113 @@ function OrionLib:AddDialog(Config)
         Active = true
     })
 
-    -- Dialog Frame
     local DialogFrame = AddThemeObject(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 10), {
         Parent = DialogOverlay,
-        Size = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(0, 300, 0, 150), -- Langsung set size asli agar konten bisa kalkulasi posisi
         Position = UDim2.new(0.5, 0, 0.5, 0),
         AnchorPoint = Vector2.new(0.5, 0.5),
         ZIndex = 500,
-        ClipsDescendants = true
+        ClipsDescendants = false -- MATIKAN INI agar tulisan tidak terpotong saat animasi
     }), "Second")
 
     AddThemeObject(MakeElement("Stroke", nil, 2), "Stroke").Parent = DialogFrame
 
-    -- Judul (Dibuat manual tanpa SetChildren agar tidak bug)
-    local TitleLabel = AddThemeObject(SetProps(MakeElement("Label", Config.Title, 18), {
+    -- Pakai Create langsung agar 100% kontrol warna dan visibilitas
+    local TitleLabel = Create("TextLabel", {
+        Name = "Title",
         Parent = DialogFrame,
+        BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 0, 40),
         Position = UDim2.new(0, 0, 0, 15),
-        TextXAlignment = Enum.TextXAlignment.Center,
-        Font = Enum.Font.GothamBold
-    }), "Text")
-
-    -- Konten/Deskripsi
-    local ContentLabel = AddThemeObject(SetProps(MakeElement("Label", Config.Content, 13), {
-        Parent = DialogFrame,
-        Size = UDim2.new(1, -40, 0, 40),
-        Position = UDim2.new(0, 20, 0, 50),
-        TextXAlignment = Enum.TextXAlignment.Center,
-        TextWrapped = true
-    }), "TextDark")
-
-    -- Tombol YES
-    local YesBtn = AddThemeObject(SetProps(MakeElement("RoundFrame", OrionLib.Themes[OrionLib.SelectedTheme].Stroke, 0, 6), {
-        Size = UDim2.new(0, 110, 0, 35),
-        Position = UDim2.new(0.5, -120, 1, -45),
-        Parent = DialogFrame
-    }), "Stroke")
-
-    SetProps(MakeElement("Label", Config.YesText, 14), {
-        Parent = YesBtn,
-        Size = UDim2.new(1, 0, 1, 0),
-        TextXAlignment = Enum.TextXAlignment.Center,
+        Text = Config.Title,
+        TextColor3 = Color3.fromRGB(255, 255, 255), -- Paksa Putih
+        TextSize = 18,
         Font = Enum.Font.GothamBold,
-        TextColor3 = Color3.fromRGB(255, 255, 255)
+        ZIndex = 501
     })
 
-    local YesClick = SetProps(MakeElement("Button"), { Parent = YesBtn, Size = UDim2.new(1, 0, 1, 0) })
+    local ContentLabel = Create("TextLabel", {
+        Name = "Content",
+        Parent = DialogFrame,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, -40, 0, 45),
+        Position = UDim2.new(0, 20, 0, 50),
+        Text = Config.Content,
+        TextColor3 = Color3.fromRGB(200, 200, 200), -- Abu-abu terang
+        TextSize = 13,
+        Font = Enum.Font.Gotham,
+        TextWrapped = true,
+        ZIndex = 501
+    })
+
+    -- Tombol YES (Bungkus dalam frame agar rounded)
+    local YesBtn = AddThemeObject(SetProps(MakeElement("RoundFrame", Color3.fromRGB(200, 40, 40), 0, 6), {
+        Size = UDim2.new(0, 110, 0, 35),
+        Position = UDim2.new(0.5, -120, 1, -45),
+        Parent = DialogFrame,
+        ZIndex = 502
+    }), "Stroke")
+
+    Create("TextLabel", {
+        Parent = YesBtn,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, 0),
+        Text = Config.YesText,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.GothamBold,
+        TextSize = 14,
+        ZIndex = 503
+    })
+
+    local YesClick = Create("TextButton", {
+        Parent = YesBtn,
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        ZIndex = 504
+    })
 
     -- Tombol NO
     local NoBtn = AddThemeObject(SetProps(MakeElement("RoundFrame", Color3.fromRGB(45, 45, 45), 0, 6), {
         Size = UDim2.new(0, 110, 0, 35),
         Position = UDim2.new(0.5, 10, 1, -45),
-        Parent = DialogFrame
+        Parent = DialogFrame,
+        ZIndex = 502
     }), "Divider")
 
-    SetProps(MakeElement("Label", Config.NoText, 14), {
+    Create("TextLabel", {
         Parent = NoBtn,
+        BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 1, 0),
-        TextXAlignment = Enum.TextXAlignment.Center,
-        Font = Enum.Font.GothamBold
+        Text = Config.NoText,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.GothamBold,
+        TextSize = 14,
+        ZIndex = 503
     })
 
-    local NoClick = SetProps(MakeElement("Button"), { Parent = NoBtn, Size = UDim2.new(1, 0, 1, 0) })
+    local NoClick = Create("TextButton", {
+        Parent = NoBtn,
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        ZIndex = 504
+    })
 
-    -- ANIMASI MASUK
+    -- [[ ANIMASI MASUK ]] --
+    DialogFrame.UIScale = Create("UIScale", { Parent = DialogFrame, Scale = 0 }) -- Gunakan UIScale untuk animasi
+    
     TweenService:Create(DialogOverlay, TweenInfo.new(0.3), {BackgroundTransparency = 0.5}):Play()
-    TweenService:Create(DialogFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 300, 0, 150)}):Play()
+    TweenService:Create(DialogFrame.UIScale, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
 
-    -- EVENT CLICK
+    -- [[ EVENT CLICK ]] --
     YesClick.MouseButton1Up:Connect(function()
         Config.Callback()
         DialogOverlay:Destroy()
     end)
 
     NoClick.MouseButton1Up:Connect(function()
-        local TweenOut = TweenService:Create(DialogFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)})
+        local TweenOut = TweenService:Create(DialogFrame.UIScale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Scale = 0})
         TweenService:Create(DialogOverlay, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
         TweenOut:Play()
         TweenOut.Completed:Connect(function() DialogOverlay:Destroy() end)
