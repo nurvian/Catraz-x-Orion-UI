@@ -556,6 +556,7 @@ function OrionLib:MakeWindow(WindowConfig)
     -- SET DEFAULT BACKGROUND DISINI (Set Kasar)
     WindowConfig.ImageBackground = WindowConfig.ImageBackground or "rbxassetid://93195749393891"
     WindowConfig.ImageTransparency = WindowConfig.ImageTransparency or 0.8
+    WindowConfig.WindowTransparency = WindowConfig.WindowTransparency or 0.1
 	WindowConfig.ConfigFolder = WindowConfig.ConfigFolder or WindowConfig.Name
 	WindowConfig.SaveConfig = WindowConfig.SaveConfig or false
 	WindowConfig.HidePremium = WindowConfig.HidePremium or false
@@ -689,7 +690,8 @@ function OrionLib:MakeWindow(WindowConfig)
 		Parent = Orion,
 		Position = UDim2.new(0.5, -307, 0.5, -172),
 		Size = UDim2.new(0, 615, 0, 344),
-		ClipsDescendants = true
+		ClipsDescendants = true,
+        BackgroundTransparency = WindowConfig.WindowTransparency
 	}), {
 		-- Masukkan Children dalam TABLE {} ini
 		SetChildren(SetProps(MakeElement("TFrame"), {
@@ -716,22 +718,20 @@ function OrionLib:MakeWindow(WindowConfig)
 	}), "Main")
 	-- [[ END OF MAIN WINDOW FIX ]] --
 	
-    -- Fitur Custom Background Image
+   -- [[ FIX LOGIKA BACKGROUND IMAGE ]]
 	if WindowConfig.ImageBackground then
 		local BGImage = Create("ImageLabel", {
 			Name = "BackgroundCustom",
 			Parent = MainWindow,
 			BackgroundTransparency = 1,
-			Image = WindowConfig.ImageBackground, -- ID Gambar dari Config
-			ImageTransparency = WindowConfig.ImageTransparency or 0.8, -- Transparansi (Biar teks tetep kebaca)
+			Image = WindowConfig.ImageBackground, 
+			ImageTransparency = WindowConfig.ImageTransparency, 
 			Size = UDim2.new(1, 0, 1, 0),
 			Position = UDim2.new(0, 0, 0, 0),
-			ZIndex = 0, -- Taruh di paling belakang
-			ScaleType = Enum.ScaleType.Slice, -- Biar ga gepeng (Opsional, bisa Stretch)
-            SliceCenter = Rect.new(100,100,100,100) -- Opsional kalau gambar UI slice
+			ZIndex = 0, 
+			ScaleType = Enum.ScaleType.Stretch, -- Ganti ke Stretch agar ID biasa muncul
 		})
         
-        -- Kalau mau backgroundnya ikut kena rounded corner window:
         local BGCorner = Create("UICorner", {
             CornerRadius = UDim.new(0, 10),
             Parent = BGImage
