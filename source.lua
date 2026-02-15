@@ -776,15 +776,99 @@ function OrionLib:MakeWindow(WindowConfig)
 
 	MakeDraggable(DragPoint, MainWindow)
 
+    -- [[ UPDATE: CLOSE BUTTON DENGAN KONFIRMASI YES/NO ]] --
 	AddConnection(CloseBtn.MouseButton1Up, function()
-		MainWindow.Visible = false
-		UIHidden = true
-		OrionLib:MakeNotification({
-			Name = "Interface Hidden",
-			Content = "Tap RightShift to reopen the interface",
-			Time = 5
+		-- 1. Wadah Overlay (Biar user gak bisa klik menu di belakangnya)
+		local DialogOverlay = Create("Frame", {
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+			BackgroundTransparency = 1, -- Nanti dianimasikan ke 0.5
+			Parent = Orion, -- Orion adalah ScreenGui utama
+			ZIndex = 499,
+			Active = true
 		})
-		WindowConfig.CloseCallback()
+
+		-- 2. Frame Dialog (Modern Glass Style)
+		local DialogFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 10), {
+			Parent = DialogOverlay,
+			Size = UDim2.new(0, 300, 0, 150),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			ZIndex = 500,
+			ClipsDescendants = true
+		}), {
+			AddThemeObject(MakeElement("Stroke", nil, 2), "Stroke"), -- Outline ikut tema
+			
+			-- Judul Dialog
+			AddThemeObject(SetProps(MakeElement("Label", "Exit Catraz Hub?", 18), {
+				Size = UDim2.new(1, 0, 0, 40),
+				Position = UDim2.new(0, 0, 0, 15),
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Font = Enum.Font.GothamBold
+			}), "Text"),
+			
+			-- Deskripsi
+			AddThemeObject(SetProps(MakeElement("Label", "Are you sure you want to destroy the window? You will need to re-execute.", 13), {
+				Size = UDim2.new(1, -40, 0, 40),
+				Position = UDim2.new(0, 20, 0, 50),
+				TextXAlignment = Enum.TextXAlignment.Center,
+				TextWrapped = true
+			}), "TextDark")
+		}), "Second")
+
+		-- 3. Tombol YES
+		local YesBtnFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(200, 40, 40), 0, 6), {
+			Size = UDim2.new(0, 110, 0, 35),
+			Position = UDim2.new(0.5, -120, 1, -45),
+			Parent = DialogFrame
+		}), {
+			SetProps(MakeElement("Label", "Yes, Exit", 14), {
+				Size = UDim2.new(1, 0, 1, 0),
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Font = Enum.Font.GothamBold,
+				TextColor3 = Color3.fromRGB(255, 255, 255)
+			}),
+			SetProps(MakeElement("Button"), { Name = "Btn", Size = UDim2.new(1, 0, 1, 0) })
+		}), "Stroke") -- Warna outline tombol pake warna Stroke tema
+
+		-- 4. Tombol NO
+		local NoBtnFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(45, 45, 45), 0, 6), {
+			Size = UDim2.new(0, 110, 0, 35),
+			Position = UDim2.new(0.5, 10, 1, -45),
+			Parent = DialogFrame
+		}), {
+			SetProps(MakeElement("Label", "No, Stay", 14), {
+				Size = UDim2.new(1, 0, 1, 0),
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Font = Enum.Font.GothamBold
+			}),
+			SetProps(MakeElement("Button"), { Name = "Btn", Size = UDim2.new(1, 0, 1, 0) })
+		}), "Divider")
+
+		-- [[ ANIMASI & LOGIKA ]] --
+		
+		-- Animasi Pop-in
+		DialogFrame.Size = UDim2.new(0, 0, 0, 0)
+		TweenService:Create(DialogOverlay, TweenInfo.new(0.3), {BackgroundTransparency = 0.5}):Play()
+		TweenService:Create(DialogFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 300, 0, 150)}):Play()
+
+		-- Logika YES
+		AddConnection(YesBtnFrame.Btn.MouseButton1Up, function()
+			OrionLib:Destroy() -- Menghapus seluruh ScreenGui
+			if WindowConfig.CloseCallback then
+				WindowConfig.CloseCallback()
+			end
+		end)
+
+		-- Logika NO
+		AddConnection(NoBtnFrame.Btn.MouseButton1Up, function()
+			local TweenOut = TweenService:Create(DialogFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)})
+			TweenService:Create(DialogOverlay, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+			TweenOut:Play()
+			TweenOut.Completed:Connect(function()
+				DialogOverlay:Destroy()
+			end)
+		end)
 	end)
 
 	AddConnection(UserInputService.InputBegan, function(Input)
