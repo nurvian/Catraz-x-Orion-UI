@@ -248,14 +248,22 @@ local function AddThemeObject(Object, Type)
 		OrionLib.ThemeObjects[Type] = {}
 	end    
 	table.insert(OrionLib.ThemeObjects[Type], Object)
-	Object[ReturnProperty(Object)] = OrionLib.Themes[OrionLib.SelectedTheme][Type]
+	local Theme = OrionLib.Themes[OrionLib.SelectedTheme] or OrionLib.Themes["Default"]
+	Object[ReturnProperty(Object)] = Theme[Type]
 	return Object
 end    
 
-function OrionLib:SetTheme() -- Hapus kata 'local', tambah 'OrionLib:'
+function OrionLib:SetTheme() 
+	-- [[ FIX: VALIDASI TEMA SEBELUM LOOP ]] --
+	local TargetTheme = OrionLib.Themes[OrionLib.SelectedTheme]
+	if not TargetTheme then 
+		OrionLib.SelectedTheme = "Default"
+		TargetTheme = OrionLib.Themes["Default"]
+	end
+
 	for Name, Type in pairs(OrionLib.ThemeObjects) do
 		for _, Object in pairs(Type) do
-			Object[ReturnProperty(Object)] = OrionLib.Themes[OrionLib.SelectedTheme][Name]
+			Object[ReturnProperty(Object)] = TargetTheme[Name]
 		end    
 	end    
 end
