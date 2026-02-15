@@ -1285,9 +1285,11 @@ function OrionLib:MakeWindow(WindowConfig)
                 DropdownConfig.Default = DropdownConfig.Default or ""
                 DropdownConfig.Multi = DropdownConfig.Multi or false -- FITUR BARU: Pilihan Ganda
                 DropdownConfig.Search = DropdownConfig.Search or false 
+                DropdownConfig.AllowNone = (DropdownConfig.AllowNone == nil and true) or DropdownConfig.AllowNone
                 DropdownConfig.Callback = DropdownConfig.Callback or function() end
                 DropdownConfig.Flag = DropdownConfig.Flag or nil
                 DropdownConfig.Save = DropdownConfig.Save or false
+                
 
                 -- Inisialisasi Value (Kalau Multi pake Tabel, kalau Single pake String)
                 local Dropdown = {
@@ -1362,36 +1364,33 @@ function OrionLib:MakeWindow(WindowConfig)
                     end
                 end
 
-                -- FUNGSI SET (Mendukung Multi & Deselect)
                 function Dropdown:Set(Value)
                     if DropdownConfig.Multi then
-                        -- Logika Tabel untuk Multi
                         if type(Dropdown.Value) ~= "table" then Dropdown.Value = {} end
                         local FoundIndex = table.find(Dropdown.Value, Value)
                         
                         if FoundIndex then
-                            table.remove(Dropdown.Value, FoundIndex) -- FITUR: Deselect di Multi
+                            -- Jika AllowNone false, jangan biarkan menghapus item terakhir
+                            if DropdownConfig.AllowNone or #Dropdown.Value > 1 then
+                                table.remove(Dropdown.Value, FoundIndex)
+                            end
                         else
-                            table.insert(Dropdown.Value, Value) -- Pilih baru
+                            table.insert(Dropdown.Value, Value)
                         end
                     else
-                        -- Logika String untuk Single
                         if Dropdown.Value == Value then
-                            Dropdown.Value = "" -- FITUR: Deselect di Single
+                            -- Hanya deselect jika AllowNone diizinkan
+                            if DropdownConfig.AllowNone then
+                                Dropdown.Value = "" 
+                            end
                         else
-                            Dropdown.Value = Value -- Pilih baru
+                            Dropdown.Value = Value
                         end
                     end
 
-                    -- Update Visual Tombol
+                    -- Update Visual Tombol & Teks (Tetap sama)
                     for Name, Btn in pairs(Dropdown.Buttons) do
-                        local IsActive = false
-                        if DropdownConfig.Multi then
-                            IsActive = table.find(Dropdown.Value, Name)
-                        else
-                            IsActive = (Dropdown.Value == Name)
-                        end
-                        
+                        local IsActive = DropdownConfig.Multi and table.find(Dropdown.Value, Name) or (Dropdown.Value == Name)
                         TweenService:Create(Btn, TweenInfo.new(.15), {BackgroundTransparency = IsActive and 0 or 1}):Play()
                         TweenService:Create(Btn.Title, TweenInfo.new(.15), {TextTransparency = IsActive and 0 or 0.4}):Play()
                     end
