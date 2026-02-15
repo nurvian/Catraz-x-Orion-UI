@@ -1364,33 +1364,44 @@ function OrionLib:MakeWindow(WindowConfig)
                     MakeElement("Corner")
                 }), "Second")
 
-                -- Logika Update Teks di UI
+                -- [[ SOURCE.LUA - FIXED DROPDOWN DISPLAY BUG ]] --
+
                 local function UpdateSelectedText()
                     if DropdownConfig.Multi then
+                        -- Pastikan variabel adalah tabel
                         if type(Dropdown.Value) ~= "table" then Dropdown.Value = {} end
+                        
                         if #Dropdown.Value == 0 then
                             DropdownFrame.F.Selected.Text = "..."
                         else
-                            -- Safety check: pastikan isinya string sebelum concat
-                            local DisplayTable = {}
+                            -- Membersihkan tampilan: Pastikan hanya nama string yang digabung
+                            local DisplayList = {}
                             for _, v in ipairs(Dropdown.Value) do
-                                table.insert(DisplayTable, tostring(v))
+                                -- Pastikan v bukan tabel agar tidak muncul "table: 0x..."
+                                if type(v) ~= "table" then
+                                    table.insert(DisplayList, tostring(v))
+                                end
                             end
-                            DropdownFrame.F.Selected.Text = table.concat(DisplayTable, ", ")
+                            DropdownFrame.F.Selected.Text = table.concat(DisplayList, ", ")
                         end
                     else
-                        DropdownFrame.F.Selected.Text = (Dropdown.Value == "" or Dropdown.Value == nil) and "..." or tostring(Dropdown.Value)
+                        -- Untuk Single-Select: Jika tidak sengaja terisi tabel, ambil item pertama atau kosongkan
+                        if type(Dropdown.Value) == "table" then
+                            Dropdown.Value = Dropdown.Value[1] or ""
+                        end
+                        
+                        local DisplayValue = tostring(Dropdown.Value or "")
+                        DropdownFrame.F.Selected.Text = (DisplayValue == "" or DisplayValue == "nil") and "..." or DisplayValue
                     end
                 end
 
-                -- [[ PERBAIKAN UTAMA DI FUNGSI SET ]] --
                 function Dropdown:Set(Value)
                     if DropdownConfig.Multi then
                         if type(Value) == "table" then
-                            -- Jika input adalah tabel (dari Load Config), langsung ganti isinya
+                            -- Langsung timpa jika input adalah tabel (dari Config)
                             Dropdown.Value = Value
                         else
-                            -- Jika input adalah string (dari klik UI), lakukan Toggle
+                            -- Toggle jika input adalah string (dari Klik UI)
                             if type(Dropdown.Value) ~= "table" then Dropdown.Value = {} end
                             local FoundIndex = table.find(Dropdown.Value, Value)
                             
@@ -1403,15 +1414,17 @@ function OrionLib:MakeWindow(WindowConfig)
                             end
                         end
                     else
-                        -- Logika Single Select
-                        if Dropdown.Value == Value then
+                        -- Single Select: Pastikan tidak memasukkan tabel ke dalam variabel string
+                        local NewValue = type(Value) == "table" and Value[1] or Value
+                        
+                        if Dropdown.Value == NewValue then
                             if DropdownConfig.AllowNone then Dropdown.Value = "" end
                         else
-                            Dropdown.Value = Value
+                            Dropdown.Value = NewValue
                         end
                     end
 
-                    -- Update Visual Tombol
+                    -- Update Visual Tombol (Highlight warna)
                     for Name, Btn in pairs(Dropdown.Buttons) do
                         local IsActive = false
                         if DropdownConfig.Multi then
