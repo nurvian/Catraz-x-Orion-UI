@@ -50,32 +50,24 @@ local OrionLib = {
 	SaveCfg = false
 }
 
--- [[ ICON MODULE KHUSUS SCRIPT HUB (CLIENT SIDE) ]] --
-local IconModule = (function()
-    local IconService = {}
-    local HttpService = game:GetService("HttpService")
-    
-    -- Kita pakai Library Lucide dari Repository yang aktif (Footagesus)
-    -- Ini menggunakan loadstring agar format table-nya terbaca sempurna
+-- [[ ICON SYSTEM KHUSUS FORMAT SIMPLE ]] --
+local Icons = (function()
+    -- Ganti link ini dengan link RAW pastebin/github file icon kamu yang tadi
     local Success, Result = pcall(function()
         return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/Icons/refs/heads/main/lucide/dist/Icons.lua"))()
     end)
     
-    local IconData = Success and Result or {}
-
-    -- Fungsi untuk mengambil data Icon berdasarkan nama
-    function IconService.GetIcon(Name)
-        if not Name then return nil end
-        
-        -- Cek apakah nama icon ada di database
-        if IconData[Name] then
-            return IconData[Name] -- Mengembalikan table {Image, ImageRectSize, dll}
-        end
-        return nil
-    end
-
-    return IconService
+    -- Kalau gagal load, balikin tabel kosong biar ga error
+    if not Success then return {} end
+    return Result
 end)()
+
+local function GetIcon(Name)
+    if Icons[Name] then
+        return Icons[Name] -- Mengembalikan "rbxassetid://..."
+    end
+    return nil
+end
 
 -- Wrapper Function biar connect sama logika Orion kamu
 local function GetIcon(Name)
@@ -822,32 +814,30 @@ function OrionLib:MakeWindow(WindowConfig)
 			}), "Text")
 		})
 
-       -- [[ LOGIKA ICON BARU (ANTI CRASH) ]] --
+       -- [[ LOGIKA ICON SIMPLE (KHUSUS LIST ID) ]] --
 		
-		-- 1. Coba cari icon di library (Lucide)
-		local TabIconData = GetIcon(TabConfig.Icon)
+		-- Coba cari nama icon di list (misal: "activity")
+		local IconID = GetIcon(TabConfig.Icon)
 		
-		if TabIconData ~= nil then
-			-- Jika ketemu di Library
-			TabFrame.Ico.Image = TabIconData.Image
-			TabFrame.Ico.ImageRectSize = TabIconData.ImageRectSize
-			TabFrame.Ico.ImageRectOffset = TabIconData.ImageRectPosition
-			TabFrame.Ico.ScaleType = Enum.ScaleType.Stretch
+		if IconID then
+			-- Kalo ketemu namanya di list
+			TabFrame.Ico.Image = IconID
+            -- Karena ini satu gambar utuh, pake Fit/Stretch aman
+			TabFrame.Ico.ScaleType = Enum.ScaleType.Fit 
 		else
-			-- Jika TIDAK ketemu (return nil), kita cek manual
+			-- Kalo gak ketemu namanya, cek apa user masukin ID manual?
 			if TabConfig.Icon and string.find(tostring(TabConfig.Icon), "rbxassetid://") then
-				-- Kalau user masukin ID Roblox manual
 				TabFrame.Ico.Image = TabConfig.Icon
-				TabFrame.Ico.ImageRectSize = Vector2.new(0,0)
-				TabFrame.Ico.ImageRectOffset = Vector2.new(0,0)
 				TabFrame.Ico.ScaleType = Enum.ScaleType.Fit
 			else
-				-- FALBACK TERAKHIR (PENTING!)
-				-- Kalau icon gak ketemu & bukan ID, kita kosongin stringnya.
-				-- Jangan biarkan nil, karena bakal error "ContentId expected, got nil"
+				-- Kalo kosong / gak ketemu, ya udah kosongin aja biar gak error nil
 				TabFrame.Ico.Image = "" 
 			end
 		end
+        
+        -- Reset Sprite Sheet (PENTING BIAR GAMBARNYA GAK KEPOTONG)
+        TabFrame.Ico.ImageRectSize = Vector2.new(0,0)
+        TabFrame.Ico.ImageRectOffset = Vector2.new(0,0)
         
 		local Container = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255, 255, 255), 5), {
 			Size = UDim2.new(1, -150, 1, -50),
