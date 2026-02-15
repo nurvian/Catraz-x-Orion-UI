@@ -1266,40 +1266,119 @@ function OrionLib:MakeWindow(WindowConfig)
 				return LabelFunction
 			end
 
-			function ElementFunction:AddParagraph(Text, Content)
-				Text = Text or "Text"
-				Content = Content or "Content"
-				local ParagraphFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
-					Size = UDim2.new(1, 0, 0, 30),
-					BackgroundTransparency = 0.7,
-					Parent = ItemParent
-				}), {
-					AddThemeObject(SetProps(MakeElement("Label", Text, 15), {
-						Size = UDim2.new(1, -12, 0, 14),
-						Position = UDim2.new(0, 12, 0, 10),
-						Font = Enum.Font.GothamBold,
-						Name = "Title"
-					}), "Text"),
-					AddThemeObject(SetProps(MakeElement("Label", "", 13), {
-						Size = UDim2.new(1, -24, 0, 0),
-						Position = UDim2.new(0, 12, 0, 26),
-						Font = Enum.Font.GothamSemibold,
-						Name = "Content",
-						TextWrapped = true
-					}), "TextDark"),
-					AddThemeObject(MakeElement("Stroke"), "Stroke")
-				}), "Second")
-				AddConnection(ParagraphFrame.Content:GetPropertyChangedSignal("Text"), function()
-					ParagraphFrame.Content.Size = UDim2.new(1, -24, 0, ParagraphFrame.Content.TextBounds.Y)
-					ParagraphFrame.Size = UDim2.new(1, 0, 0, ParagraphFrame.Content.TextBounds.Y + 35)
-				end)
-				ParagraphFrame.Content.Text = Content
-				local ParagraphFunction = {}
-				function ParagraphFunction:Set(ToChange)
-					ParagraphFrame.Content.Text = ToChange
-				end
-				return ParagraphFunction
-			end    
+            -- [[ SOURCE.LUA - ADVANCED DYNAMIC PARAGRAPH ]] --
+
+            function ElementFunction:AddParagraph(Config)
+                Config = Config or {}
+                Config.Title = Config.Title or "Paragraph"
+                Config.Desc = Config.Desc or "Description"
+                Config.Image = Config.Image or nil
+                Config.ImageSize = Config.ImageSize or 38
+                Config.Buttons = Config.Buttons or {} -- Mendukung banyak tombol
+
+                local ParagraphFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 6), {
+                    Size = UDim2.new(1, 0, 0, 45),
+                    BackgroundTransparency = 0.85,
+                    Parent = ItemParent,
+                    ClipsDescendants = true
+                }), {
+                    AddThemeObject(MakeElement("Stroke", nil, 1), "Stroke"),
+                    MakeElement("Padding", 10, 12, 12, 10),
+                    SetProps(MakeElement("List", 0, 8), { -- List utama untuk menyusun elemen secara vertikal
+                        SortOrder = Enum.SortOrder.LayoutOrder,
+                        Padding = UDim.new(0, 10)
+                    })
+                }), "Second")
+
+                -- 1. BAGIAN ATAS (Image + Text)
+                local TopContainer = SetProps(MakeElement("TFrame"), {
+                    Size = UDim2.new(1, 0, 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y
+                })
+                TopContainer.Parent = ParagraphFrame
+                
+                local MainLayout = SetProps(MakeElement("List", 0, 12), {
+                    FillDirection = Enum.FillDirection.Horizontal,
+                    VerticalAlignment = Enum.VerticalAlignment.Center,
+                    Parent = TopContainer
+                })
+
+                -- Asset Gambar / Ikon
+                if Config.Image or Config.Icon then
+                    local Img = SetProps(MakeElement("Image", Config.Image or Config.Icon), {
+                        Parent = TopContainer,
+                        Size = UDim2.new(0, Config.ImageSize, 0, Config.ImageSize),
+                        ZIndex = 5
+                    })
+                    Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = Img })
+                end
+
+                -- Container Teks
+                local TextContainer = SetChildren(SetProps(MakeElement("TFrame"), {
+                    Size = UDim2.new(1, -(Config.Image and Config.ImageSize + 15 or 0), 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,
+                    Parent = TopContainer
+                }), {
+                    MakeElement("List", 0, 2)
+                })
+
+                local TitleLabel = AddThemeObject(SetProps(MakeElement("Label", Config.Title, 15), {
+                    Size = UDim2.new(1, 0, 0, 18),
+                    Font = Enum.Font.GothamBold,
+                    Parent = TextContainer
+                }), "Text")
+
+                local DescLabel = AddThemeObject(SetProps(MakeElement("Label", Config.Desc, 13), {
+                    Size = UDim2.new(1, 0, 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,
+                    Font = Enum.Font.GothamMedium,
+                    TextWrapped = true,
+                    TextTransparency = 0.3,
+                    Parent = TextContainer
+                }), "TextDark")
+
+                -- 2. BAGIAN TOMBOL (Jika ada)
+                local ButtonContainer = SetProps(MakeElement("TFrame"), {
+                    Size = UDim2.new(1, 0, 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,
+                    Parent = ParagraphFrame,
+                    Visible = #Config.Buttons > 0
+                })
+                SetProps(MakeElement("List", 0, 8), { FillDirection = Enum.FillDirection.Horizontal, Parent = ButtonContainer })
+
+                for _, BtnData in ipairs(Config.Buttons) do
+                    local SmallBtn = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(200, 40, 40), 0, 4), {
+                        Size = UDim2.new(0, 0, 0, 26),
+                        AutomaticSize = Enum.AutomaticSize.X,
+                        Parent = ButtonContainer
+                    }), {
+                        MakeElement("Padding", 0, 10, 10, 0),
+                        SetProps(MakeElement("Label", BtnData.Title, 12), {
+                            Size = UDim2.new(0, 0, 1, 0),
+                            AutomaticSize = Enum.AutomaticSize.X,
+                            Font = Enum.Font.GothamBold,
+                            TextColor3 = Color3.fromRGB(255, 255, 255),
+                            TextXAlignment = Enum.TextXAlignment.Center
+                        })
+                    }), "Stroke")
+                    
+                    local BtnClick = SetProps(MakeElement("Button"), { Parent = SmallBtn, Size = UDim2.new(1, 0, 1, 0) })
+                    BtnClick.MouseButton1Up:Connect(BtnData.Callback)
+                end
+
+                -- 3. AUTO RESIZE LOGIC
+                AddConnection(ParagraphFrame.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+                    ParagraphFrame.Size = UDim2.new(1, 0, 0, ParagraphFrame.UIListLayout.AbsoluteContentSize.Y + 20)
+                end)
+
+                -- 4. RETURN FUNCTIONS (Untuk Live Update)
+                local ParagraphFunctions = {}
+                function ParagraphFunctions:SetTitle(NewTitle) TitleLabel.Text = NewTitle end
+                function ParagraphFunctions:SetDesc(NewDesc) DescLabel.Text = NewDesc end
+                function ParagraphFunctions:SetImage(NewImg) if TopContainer:FindFirstChild("ImageLabel") then TopContainer.ImageLabel.Image = NewImg end end
+                
+                return ParagraphFunctions
+            end
 
 			function ElementFunction:AddButton(ButtonConfig)
 				ButtonConfig = ButtonConfig or {}
