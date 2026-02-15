@@ -826,6 +826,7 @@ function OrionLib:MakeWindow(WindowConfig)
     WindowConfig.Name = WindowConfig.Name or "Orion Library"
     WindowConfig.Version = WindowConfig.Version or "v1.0.0"
     WindowConfig.Subtext = WindowConfig.Subtext or "Premium Script Hub"
+    WindowConfig.TagColor = WindowConfig.TagColor or OrionLib.Themes[OrionLib.SelectedTheme].Stroke
     
     -- [[ 1. ADJUST WINDOW NAME (NAIKKAN) ]] --
     local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Name, 18), {
@@ -855,20 +856,20 @@ function OrionLib:MakeWindow(WindowConfig)
 
     -- Version Tag dengan Label Terpisah agar tidak Bug
     local VersionTag = AddThemeObject(SetProps(MakeElement("RoundFrame", WindowConfig.TagColor, 0, 4), {
-        Size = UDim2.new(0, 0, 0, 16),
+        Size = UDim2.new(0, 0, 0, 18),
         Name = "VersionTag",
         AutomaticSize = Enum.AutomaticSize.X,
-        ZIndex = 15
+        ZIndex = 40
     }), "Stroke")
 
-    local VersionLabel = SetProps(MakeElement("Label", WindowConfig.Version, 10), {
+    local VersionLabel = SetProps(MakeElement("Label", WindowConfig.Version, 11), {
         Parent = VersionTag,
         Size = UDim2.new(1, 0, 1, 0),
         Text = WindowConfig.Version, -- Force teks versi
         TextXAlignment = Enum.TextXAlignment.Center,
         Font = Enum.Font.GothamBold,
         TextColor3 = Color3.fromRGB(255, 255, 255),
-        ZIndex = 16
+        ZIndex = 45
     })
     
     MakeElement("Padding", 0, 6, 6, 0).Parent = VersionTag -- Kasih jarak
@@ -925,7 +926,8 @@ function OrionLib:MakeWindow(WindowConfig)
     -- [[ 3. PASANG PARENT & LOGIKA SETELAH WINDOW JADI ]] --
     WindowName.Parent = MainWindow.TopBar
     WindowSubtext.Parent = MainWindow.TopBar
-    VersionTag.Parent = MainWindow.TopBar -- Sekarang MainWindow sudah tidak nil
+    VersionTag.Parent = MainWindow.TopBar
+    VersionTag.BackgroundColor3 = WindowConfig.TagColor or OrionLib.Themes[OrionLib.SelectedTheme].Stroke -- Sekarang MainWindow sudah tidak nil
 
     WindowName.Text = WindowConfig.Name
     WindowSubtext.Text = WindowConfig.Subtext
@@ -942,12 +944,12 @@ function OrionLib:MakeWindow(WindowConfig)
         })
     end
 
-    -- Update posisi Tag secara dinamis
+    -- [[ UPDATE POSISI: MOVE UP ]] --
     task.spawn(function()
         while MainWindow and MainWindow.Parent do
             local TitleX = WindowName.AbsolutePosition.X - MainWindow.AbsolutePosition.X
-            -- Gunakan -10 agar sejajar dengan posisi WindowName yang baru
-            VersionTag.Position = UDim2.new(0, TitleX + WindowName.AbsoluteSize.X + 8, 0.5, -10)
+            -- Ganti angka terakhir jadi -12 atau -14 untuk menaikkan tag
+            VersionTag.Position = UDim2.new(0, TitleX + WindowName.AbsoluteSize.X + 8, 0.5, -12) 
             task.wait(0.2)
         end
     end)
