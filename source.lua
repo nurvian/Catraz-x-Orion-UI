@@ -425,12 +425,14 @@ local NotificationHolder = SetProps(SetChildren(MakeElement("TFrame"), {
 	Parent = Orion
 })
 
+-- GANTI SELURUH FUNCTION OrionLib:MakeNotification DENGAN INI:
+
 function OrionLib:MakeNotification(NotificationConfig)
 	spawn(function()
 		NotificationConfig.Name = NotificationConfig.Name or "Notification"
 		NotificationConfig.Content = NotificationConfig.Content or "Test"
 		NotificationConfig.Image = NotificationConfig.Image or "rbxassetid://4384403532"
-		NotificationConfig.Time = NotificationConfig.Time or 15
+		NotificationConfig.Time = NotificationConfig.Time or 5 -- Default 5 detik
 
 		local NotificationParent = SetProps(MakeElement("TFrame"), {
 			Size = UDim2.new(1, 0, 0, 0),
@@ -438,53 +440,97 @@ function OrionLib:MakeNotification(NotificationConfig)
 			Parent = NotificationHolder
 		})
 
-		local NotificationFrame = SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 10), {
+		-- 1. FRAME UTAMA (Modern Style)
+		-- Menggunakan "Second" theme color (bukan hitam pekat) biar elegan
+		local NotificationFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 8), {
 			Parent = NotificationParent, 
 			Size = UDim2.new(1, 0, 0, 0),
 			Position = UDim2.new(1, -55, 0, 0),
-			BackgroundTransparency = 0,
-			AutomaticSize = Enum.AutomaticSize.Y
-		}), {
-			MakeElement("Stroke", Color3.fromRGB(93, 93, 93), 1.2),
+			BackgroundTransparency = 0.1, -- Sedikit transparan (Glass effect)
+			AutomaticSize = Enum.AutomaticSize.Y,
+            ClipsDescendants = false -- Biar shadow/glow kelihatan
+		}), "Second")
+        
+        -- 2. OUTLINE (UIStroke) - IKUT TEMA!
+        -- Ini kuncinya: AddThemeObject tipe "Stroke"
+        local Outline = AddThemeObject(MakeElement("Stroke", Color3.fromRGB(255, 255, 255), 1.5), "Stroke")
+        Outline.Parent = NotificationFrame
+        Outline.Transparency = 0
+
+		-- 3. DROP SHADOW (Opsional, biar pop-up)
+		local Shadow = Create("ImageLabel", {
+			Parent = NotificationFrame,
+			BackgroundTransparency = 1,
+			Image = "rbxassetid://5554236805", -- Shadow image
+			ImageColor3 = Color3.fromRGB(0,0,0),
+			ImageTransparency = 0.5,
+			Size = UDim2.new(1, 20, 1, 20),
+			Position = UDim2.new(0, -10, 0, -10),
+			ZIndex = 0,
+            ScaleType = Enum.ScaleType.Slice,
+            SliceCenter = Rect.new(23,23,277,277)
+		})
+
+        -- 4. ISI KONTEN
+		SetChildren(NotificationFrame, {
 			MakeElement("Padding", 12, 12, 12, 12),
+            
+            -- Icon (Lebih besar dikit)
 			SetProps(MakeElement("Image", NotificationConfig.Image), {
-				Size = UDim2.new(0, 20, 0, 20),
+				Size = UDim2.new(0, 24, 0, 24),
 				ImageColor3 = Color3.fromRGB(240, 240, 240),
-				Name = "Icon"
+				Name = "Icon",
+                Position = UDim2.new(0, 0, 0, 2)
 			}),
-			SetProps(MakeElement("Label", NotificationConfig.Name, 15), {
-				Size = UDim2.new(1, -30, 0, 20),
-				Position = UDim2.new(0, 30, 0, 0),
+            
+            -- Judul
+			AddThemeObject(SetProps(MakeElement("Label", NotificationConfig.Name, 16), {
+				Size = UDim2.new(1, -35, 0, 20),
+				Position = UDim2.new(0, 32, 0, 2), -- Geser kanan biar gak nabrak icon
 				Font = Enum.Font.GothamBold,
-				Name = "Title"
-			}),
-			SetProps(MakeElement("Label", NotificationConfig.Content, 14), {
+				Name = "Title",
+                TextXAlignment = Enum.TextXAlignment.Left
+			}), "Text"),
+            
+            -- Deskripsi
+			AddThemeObject(SetProps(MakeElement("Label", NotificationConfig.Content, 14), {
 				Size = UDim2.new(1, 0, 0, 0),
-				Position = UDim2.new(0, 0, 0, 25),
-				Font = Enum.Font.GothamSemibold,
+				Position = UDim2.new(0, 0, 0, 32),
+				Font = Enum.Font.GothamMedium,
 				Name = "Content",
 				AutomaticSize = Enum.AutomaticSize.Y,
 				TextColor3 = Color3.fromRGB(200, 200, 200),
-				TextWrapped = true
-			})
+				TextWrapped = true,
+                TextTransparency = 0.3
+			}), "TextDark")
 		})
 
+		-- ANIMASI MASUK (Slide In)
 		TweenService:Create(NotificationFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
+        -- TUNGGU...
 		wait(NotificationConfig.Time - 0.88)
-		TweenService:Create(NotificationFrame.Icon, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {ImageTransparency = 1}):Play()
-		TweenService:Create(NotificationFrame, TweenInfo.new(0.8, Enum.EasingStyle.Quint), {BackgroundTransparency = 0.6}):Play()
-		wait(0.3)
-		TweenService:Create(NotificationFrame.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {Transparency = 0.9}):Play()
-		TweenService:Create(NotificationFrame.Title, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 0.4}):Play()
-		TweenService:Create(NotificationFrame.Content, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 0.5}):Play()
-		wait(0.05)
 
-		NotificationFrame:TweenPosition(UDim2.new(1, 20, 0, 0),'In','Quint',0.8,true)
-		wait(1.35)
+        -- ANIMASI KELUAR (Fade Out + Slide Out)
+        -- Kita animasikan Outline, Background, Text, dan Icon biar smooth hilangnya
+		TweenService:Create(NotificationFrame.Icon, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {ImageTransparency = 1}):Play()
+		TweenService:Create(NotificationFrame, TweenInfo.new(0.8, Enum.EasingStyle.Quint), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(Shadow, TweenInfo.new(0.8, Enum.EasingStyle.Quint), {ImageTransparency = 1}):Play()
+        
+        -- Animasi Outline hilang (Penting!)
+        TweenService:Create(Outline, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {Transparency = 1}):Play()
+        
+		TweenService:Create(NotificationFrame.Title, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 1}):Play()
+		TweenService:Create(NotificationFrame.Content, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 1}):Play()
+		
+        wait(0.2)
+		NotificationFrame:TweenPosition(UDim2.new(1.2, 0, 0, 0),'In','Quint',0.8,true)
+		
+        wait(1)
 		NotificationFrame:Destroy()
+        NotificationParent:Destroy()
 	end)
-end    
+end
 
 function OrionLib:Init()
 	if OrionLib.SaveCfg then	
