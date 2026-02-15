@@ -678,31 +678,14 @@ function OrionLib:MakeNotification(NotificationConfig)
 end
 
 function OrionLib:Init()
-    -- Cek Sistem Auto Load Per File
     local AutoLoadPath = OrionLib.Folder .. "/AutoLoad.txt"
     if isfile(AutoLoadPath) then
-        local TargetConfig = readfile(AutoLoadPath)
-        local ConfigPath = OrionLib.Folder .. "/" .. TargetConfig .. ".txt"
-        
+        local Target = readfile(AutoLoadPath)
+        local ConfigPath = OrionLib.Folder .. "/" .. Target .. ".txt"
         if isfile(ConfigPath) then
-            pcall(function()
-                LoadCfg(readfile(ConfigPath))
-                OrionLib:MakeNotification({
-                    Name = "Auto Load",
-                    Content = "Successfully loaded '" .. TargetConfig .. "' config.",
-                    Time = 5
-                })
-            end)
+            pcall(function() LoadCfg(readfile(ConfigPath)) end) -- Memuat otomatis
         end
-    -- Jika tidak ada AutoLoad.txt, cek sistem lama (GameId)
-    elseif OrionLib.SaveCfg then	
-        pcall(function()
-            local Path = OrionLib.Folder .. "/" .. game.GameId .. ".txt"
-            if isfile(Path) then
-                LoadCfg(readfile(Path))
-            end
-        end)		
-    end	
+    end
 end
 
 function OrionLib:MakeWindow(WindowConfig)
