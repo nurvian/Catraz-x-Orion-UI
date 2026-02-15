@@ -826,6 +826,7 @@ function OrionLib:MakeWindow(WindowConfig)
     WindowConfig.Name = WindowConfig.Name or "Orion Library"
     WindowConfig.Version = WindowConfig.Version or "v1.0.0"
     WindowConfig.Subtext = WindowConfig.Subtext or "Premium Script Hub"
+    WindowConfig.VersionIcon = WindowConfig.VersionIcon or "shield-check"
     WindowConfig.TagColor = WindowConfig.TagColor or OrionLib.Themes[OrionLib.SelectedTheme].Stroke
     
     -- [[ 1. ADJUST WINDOW NAME (NAIKKAN) ]] --
@@ -854,23 +855,36 @@ function OrionLib:MakeWindow(WindowConfig)
         AutomaticSize = Enum.AutomaticSize.X
     }), "TextDark")
 
-    -- Version Tag dengan Label Terpisah agar tidak Bug
-    local VersionTag = AddThemeObject(SetProps(MakeElement("RoundFrame", WindowConfig.TagColor, 0, 4), {
-        Size = UDim2.new(0, 0, 0, 18),
+    local VersionTag = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", WindowConfig.TagColor, 0, 4), {
+        Size = UDim2.new(0, 0, 0, 18), -- Ukuran tetap 18 sesuai permintaan
         Name = "VersionTag",
         AutomaticSize = Enum.AutomaticSize.X,
         ZIndex = 40
+    }), {
+        MakeElement("Padding", 0, 6, 6, 0), -- Jarak dalam tag
+        SetProps(MakeElement("List", 0, 4), { -- Menata icon & teks ke samping secara otomatis
+            FillDirection = Enum.FillDirection.Horizontal,
+            VerticalAlignment = Enum.VerticalAlignment.Center,
+            SortOrder = Enum.SortOrder.LayoutOrder
+        }),
+        -- Ikon Lucide di depan
+        SetProps(MakeElement("Image", WindowConfig.VersionIcon), {
+            Size = UDim2.new(0, 12, 0, 12),
+            Name = "VIcon",
+            ImageColor3 = Color3.fromRGB(255, 255, 255),
+            ZIndex = 45
+        }),
+        -- Teks Versi
+        SetProps(MakeElement("Label", WindowConfig.Version, 11), {
+            Size = UDim2.new(0, 0, 0, 12),
+            AutomaticSize = Enum.AutomaticSize.X,
+            Text = WindowConfig.Version,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Font = Enum.Font.GothamBold,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            ZIndex = 45
+        })
     }), "Stroke")
-
-    local VersionLabel = SetProps(MakeElement("Label", WindowConfig.Version, 11), {
-        Parent = VersionTag,
-        Size = UDim2.new(1, 0, 1, 0),
-        Text = WindowConfig.Version, -- Force teks versi
-        TextXAlignment = Enum.TextXAlignment.Center,
-        Font = Enum.Font.GothamBold,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        ZIndex = 45
-    })
     
     MakeElement("Padding", 0, 6, 6, 0).Parent = VersionTag -- Kasih jarak
 
@@ -949,7 +963,7 @@ function OrionLib:MakeWindow(WindowConfig)
         while MainWindow and MainWindow.Parent do
             local TitleX = WindowName.AbsolutePosition.X - MainWindow.AbsolutePosition.X
             -- Ganti angka terakhir jadi -12 atau -14 untuk menaikkan tag
-            VersionTag.Position = UDim2.new(0, TitleX + WindowName.AbsoluteSize.X + 8, 0.5, -12) 
+            VersionTag.Position = UDim2.new(0, TitleX + WindowName.AbsoluteSize.X + 8, 0.5, -14) 
             task.wait(0.2)
         end
     end)
