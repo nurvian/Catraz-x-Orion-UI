@@ -8,6 +8,22 @@ local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
 local Debris = game:GetService("Debris")
 
+-- [[ 0. SESSION CONFIGURATION ]] --
+local FileName = "CatrazHub_Session.txt" -- Nama file yang disimpan di folder executor
+
+local function SaveKey(key)
+    if writefile then
+        writefile(FileName, key)
+    end
+end
+
+local function GetSavedKey()
+    if isfile and isfile(FileName) then
+        return readfile(FileName)
+    end
+    return nil
+end
+
 -- [[ 1. JUNKIE SDK INITIALIZATION ]] --
 local Junkie = loadstring(game:HttpGet("https://jnkie.com/sdk/library.lua"))()
 
@@ -51,6 +67,35 @@ local GameScripts = {
 
 -- Script Universal (Kalau game tidak dikenali, load ini)
 local UniversalScript = "https://raw.githubusercontent.com/username/repo/main/Universal.lua"
+
+-- [[ FUNCTION: LOAD ACTUAL GAME ]] --
+local function LoadCatraz(validatedKey)
+    getgenv().SCRIPT_KEY = validatedKey
+    local PlaceID = game.PlaceId
+    local ScriptToLoad = GameScripts[PlaceID]
+    
+    if ScriptToLoad then
+        loadstring(game:HttpGet(ScriptToLoad))()
+    else
+        LocalPlayer:Kick("\n[Catraz Hub]\n\nGame NOT supported!\nPlace ID: " .. tostring(PlaceID))
+    end
+end
+
+-- [[ 3. AUTO LOGIN CHECK ]] --
+local saved = GetSavedKey()
+if saved then
+    local check = Junkie.check_key(saved)
+    if check.valid then
+        -- Jika key masih valid, langsung load game tanpa munculin UI
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Catraz Hub",
+            Text = "Session restored! Welcome back.",
+            Duration = 5
+        })
+        LoadCatraz(saved)
+        return -- STOP SCRIPT DISINI, GAK USAH LANJUT KE UI
+    end
+end
 
 -- [[ GAME LIST DATA ]] --
 local SupportedGames = {
@@ -248,6 +293,8 @@ local CheckBtn = CreateButton("Verify Access", Config.Theme.Accent, 240, functio
         -- [[ LOGIN SUKSES ]] --
         KeyInput.Text = "Welcome, " .. LocalPlayer.Name .. "!"
         KeyInput.TextColor3 = Config.Theme.Status.Online
+
+        SaveKey(InputKey)
         
         -- Simpan Key Global
         getgenv().SCRIPT_KEY = InputKey
