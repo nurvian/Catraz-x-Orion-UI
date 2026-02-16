@@ -513,7 +513,7 @@ function OrionLib:AddDialog(Config)
     -- Tombol YES
     local YesBtn = AddThemeObject(SetProps(MakeElement("RoundFrame", Color3.fromRGB(200, 40, 40), 0, 6), {
         Size = UDim2.new(0, 110, 0, 35),
-        Position = UDim2.new(0.5, -120, 0.4, 0), -- Posisi eksplisit
+        Position = UDim2.new(0.5, -120, 0.65, 0), -- Posisi eksplisit
         Parent = DialogFrame, ZIndex = 5003
     }), "Stroke")
 
@@ -526,7 +526,7 @@ function OrionLib:AddDialog(Config)
     -- Tombol NO
     local NoBtn = AddThemeObject(SetProps(MakeElement("RoundFrame", Color3.fromRGB(45, 45, 45), 0, 6), {
         Size = UDim2.new(0, 110, 0, 35),
-        Position = UDim2.new(0.5, 10, 0.4, 0),
+        Position = UDim2.new(0.5, 10, 0.65, 0),
         Parent = DialogFrame, ZIndex = 5003
     }), "Divider")
 
@@ -734,12 +734,15 @@ function OrionLib:MakeWindow(WindowConfig)
 		end	
 	end
 
-	local TabHolder = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255, 255, 255), 4), {
-		Size = UDim2.new(1, 0, 1, -50)
+	-- [[ UPDATE 1: TAB HOLDER TRANSPARAN ]] --
+	local TabHolder = SetChildren(SetProps(MakeElement("ScrollFrame", nil, 4), { -- Hapus warna background
+		Size = UDim2.new(1, 0, 1, -50),
+		BackgroundTransparency = 1, -- Bikin transparan total
+		ScrollBarImageTransparency = 0.5 -- Opsional: Scrollbar agak pudar
 	}), {
 		MakeElement("List"),
 		MakeElement("Padding", 8, 0, 0, 8)
-	}), "Divider")
+	})
 
 	AddConnection(TabHolder.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
 		TabHolder.CanvasSize = UDim2.new(0, 0, 0, TabHolder.UIListLayout.AbsoluteContentSize.Y + 16)
@@ -1165,10 +1168,21 @@ function OrionLib:MakeWindow(WindowConfig)
 		TabConfig.Name = TabConfig.Name or "Tab"
 		TabConfig.Icon = TabConfig.Icon or ""
 		TabConfig.PremiumOnly = TabConfig.PremiumOnly or false
+		-- [[ FITUR BARU: GLASS TAB ]] --
+		TabConfig.Glass = TabConfig.Glass or false
+		TabConfig.Outline = (TabConfig.Outline == nil and true) or TabConfig.Outline -- Default True
+
+		-- Logika Background Tab
+		local TabBgTransparency = TabConfig.Glass and 0.6 or 1
+		local TabBgColor = TabConfig.Glass and Color3.fromRGB(40, 40, 40) or Color3.fromRGB(0,0,0)
 
 		local TabFrame = SetChildren(SetProps(MakeElement("Button"), {
-			Size = UDim2.new(1, 0, 0, 30),
-			Parent = TabHolder
+			Size = UDim2.new(1, -10, 0, 30), -- Kurangi width dikit biar ada gap
+			Position = UDim2.new(0, 5, 0, 0), -- Posisi agak tengah
+			Parent = TabHolder,
+			BackgroundColor3 = TabBgColor,
+			BackgroundTransparency = TabBgTransparency,
+			AutoButtonColor = true
 		}), {
 			AddThemeObject(SetProps(MakeElement("Image", TabConfig.Icon), {
 				AnchorPoint = Vector2.new(0, 0.5),
@@ -1186,7 +1200,18 @@ function OrionLib:MakeWindow(WindowConfig)
 			}), "Text")
 		})
 
-       -- [[ LOGIKA ICON SIMPLE ]] --
+		-- Tambah Corner & Outline kalau diminta
+		if TabConfig.Glass then
+			MakeElement("Corner", 0, 6).Parent = TabFrame
+		end
+		
+		if TabConfig.Outline then
+			local TabStroke = AddThemeObject(MakeElement("Stroke"), "Stroke")
+			TabStroke.Parent = TabFrame
+			TabStroke.Transparency = TabConfig.Glass and 0.5 or 1 -- Kalau glass on, stroke muncul dikit
+		end
+
+		-- [[ LOGIKA ICON SIMPLE TETAP SAMA ]] --
 		local IconID = GetIcon(TabConfig.Icon)
 		if IconID then
 			TabFrame.Ico.Image = IconID
@@ -1393,6 +1418,8 @@ function OrionLib:MakeWindow(WindowConfig)
 				ButtonConfig.Name = ButtonConfig.Name or "Button"
 				ButtonConfig.Callback = ButtonConfig.Callback or function() end
 				ButtonConfig.Icon = ButtonConfig.Icon or "rbxassetid://107150227368485"
+				ButtonConfig.Outline = (ButtonConfig.Outline == nil and true) or ButtonConfig.Outline
+
 				local Button = {}
 				local Click = SetProps(MakeElement("Button"), { Size = UDim2.new(1, 0, 1, 0) })
 				local ButtonFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
@@ -1409,7 +1436,7 @@ function OrionLib:MakeWindow(WindowConfig)
 						Size = UDim2.new(0, 20, 0, 20),
 						Position = UDim2.new(1, -30, 0, 7),
 					}), "TextDark"),
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
+					(ButtonConfig.Outline and AddThemeObject(MakeElement("Stroke"), "Stroke") or nil),
 					Click
 				}), "Second")
 				AddConnection(Click.MouseEnter, function()
@@ -1429,92 +1456,95 @@ function OrionLib:MakeWindow(WindowConfig)
 				return Button
 			end    
 
-            -- [[ SOURCE.LUA - UPDATE ADD TOGGLE (SWITCH STYLE) ]] --
+			function ElementFunction:AddToggle(ToggleConfig)
+				ToggleConfig = ToggleConfig or {}
+				ToggleConfig.Name = ToggleConfig.Name or "Toggle"
+				ToggleConfig.Default = ToggleConfig.Default or false
+				ToggleConfig.Callback = ToggleConfig.Callback or function() end
+				ToggleConfig.Color = ToggleConfig.Color or Color3.fromRGB(200, 40, 40) -- Warna Catraz (Merah)
+				ToggleConfig.Flag = ToggleConfig.Flag or nil
+				ToggleConfig.Save = ToggleConfig.Save or false
+				-- [[ FITUR BARU: OUTLINE CONTROL ]] --
+				ToggleConfig.Outline = (ToggleConfig.Outline == nil and true) or ToggleConfig.Outline
 
-            function ElementFunction:AddToggle(ToggleConfig)
-                ToggleConfig = ToggleConfig or {}
-                ToggleConfig.Name = ToggleConfig.Name or "Toggle"
-                ToggleConfig.Default = ToggleConfig.Default or false
-                ToggleConfig.Callback = ToggleConfig.Callback or function() end
-                ToggleConfig.Color = ToggleConfig.Color or Color3.fromRGB(200, 40, 40) -- Warna Catraz (Merah)
-                ToggleConfig.Flag = ToggleConfig.Flag or nil
-                ToggleConfig.Save = ToggleConfig.Save or false
+				local Toggle = {Value = ToggleConfig.Default, Save = ToggleConfig.Save, Type = "Toggle"}
+				local Click = SetProps(MakeElement("Button"), { Size = UDim2.new(1, 0, 1, 0) })
 
-                local Toggle = {Value = ToggleConfig.Default, Save = ToggleConfig.Save, Type = "Toggle"}
-                local Click = SetProps(MakeElement("Button"), { Size = UDim2.new(1, 0, 1, 0) })
+				-- 1. TRACK (Latar belakang saklar yang lonjong)
+				local ToggleTrack = SetChildren(SetProps(MakeElement("RoundFrame", OrionLib.Themes[OrionLib.SelectedTheme].Divider, 0, 12), {
+					Size = UDim2.new(0, 44, 0, 22),
+					Position = UDim2.new(1, -12, 0.5, 0),
+					AnchorPoint = Vector2.new(1, 0.5),
+					BackgroundTransparency = 0 
+				}), {
+					AddThemeObject(MakeElement("Stroke", nil, 1.5), "Stroke") -- Outline saklar (tetap ada biar kelihatan saklarnya)
+				})
 
-                -- 1. TRACK (Latar belakang saklar yang lonjong)
-                local ToggleTrack = SetChildren(SetProps(MakeElement("RoundFrame", OrionLib.Themes[OrionLib.SelectedTheme].Divider, 0, 12), {
-                    Size = UDim2.new(0, 44, 0, 22),
-                    Position = UDim2.new(1, -12, 0.5, 0),
-                    AnchorPoint = Vector2.new(1, 0.5),
-                    BackgroundTransparency = 0 --
-                }), {
-                    AddThemeObject(MakeElement("Stroke", nil, 1.5), "Stroke") -- Outline saklar
-                })
+				-- 2. KNOB (Bulatan saklar yang bergeser)
+				local ToggleKnob = SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 10), {
+					Size = UDim2.new(0, 16, 0, 16),
+					Position = UDim2.new(0, 3, 0.5, 0),
+					AnchorPoint = Vector2.new(0, 0.5),
+					Parent = ToggleTrack
+				})
 
-                -- 2. KNOB (Bulatan saklar yang bergeser)
-                local ToggleKnob = SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 10), {
-                    Size = UDim2.new(0, 16, 0, 16),
-                    Position = UDim2.new(0, 3, 0.5, 0),
-                    AnchorPoint = Vector2.new(0, 0.5),
-                    Parent = ToggleTrack
-                })
+				local ToggleFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
+					Size = UDim2.new(1, 0, 0, 38),
+					Parent = ItemParent,
+					BackgroundTransparency = WindowConfig.WindowTransparency -- Ikut transparansi window
+				}), {
+					AddThemeObject(SetProps(MakeElement("Label", ToggleConfig.Name, 15), {
+						Size = UDim2.new(1, -60, 1, 0),
+						Position = UDim2.new(0, 12, 0, 0),
+						Font = Enum.Font.GothamBold,
+						Name = "Content"
+					}), "Text"),
+					
+					-- [[ UPDATE: HANYA TAMBAHKAN STROKE JIKA OUTLINE AKTIF ]] --
+					(ToggleConfig.Outline and AddThemeObject(MakeElement("Stroke"), "Stroke") or nil),
+					
+					ToggleTrack,
+					Click
+				}), "Second")
 
-                local ToggleFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
-                    Size = UDim2.new(1, 0, 0, 38),
-                    Parent = ItemParent,
-                    BackgroundTransparency = WindowConfig.WindowTransparency -- Ikut transparansi window
-                }), {
-                    AddThemeObject(SetProps(MakeElement("Label", ToggleConfig.Name, 15), {
-                        Size = UDim2.new(1, -60, 1, 0),
-                        Position = UDim2.new(0, 12, 0, 0),
-                        Font = Enum.Font.GothamBold,
-                        Name = "Content"
-                    }), "Text"),
-                    AddThemeObject(MakeElement("Stroke"), "Stroke"),
-                    ToggleTrack,
-                    Click
-                }), "Second")
+				-- 3. FUNGSI ANIMASI GESER
+				function Toggle:Set(Value)
+					Toggle.Value = Value
+					
+					-- Animasi Warna Track
+					local TargetColor = Toggle.Value and ToggleConfig.Color or OrionLib.Themes[OrionLib.SelectedTheme].Divider
+					TweenService:Create(ToggleTrack, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {BackgroundColor3 = TargetColor}):Play()
+					
+					-- Animasi Geser Knob
+					local TargetPosition = Toggle.Value and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
+					TweenService:Create(ToggleKnob, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Position = TargetPosition}):Play()
+					
+					-- Callback
+					ToggleConfig.Callback(Toggle.Value)
+				end    
 
-                -- 3. FUNGSI ANIMASI GESER
-                function Toggle:Set(Value)
-                    Toggle.Value = Value
-                    
-                    -- Animasi Warna Track
-                    local TargetColor = Toggle.Value and ToggleConfig.Color or OrionLib.Themes[OrionLib.SelectedTheme].Divider
-                    TweenService:Create(ToggleTrack, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {BackgroundColor3 = TargetColor}):Play()
-                    
-                    -- Animasi Geser Knob
-                    local TargetPosition = Toggle.Value and UDim2.new(1, -19, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
-                    TweenService:Create(ToggleKnob, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Position = TargetPosition}):Play()
-                    
-                    -- Callback
-                    ToggleConfig.Callback(Toggle.Value)
-                end    
+				-- Inisialisasi awal
+				Toggle:Set(Toggle.Value)
 
-                -- Inisialisasi awal
-                Toggle:Set(Toggle.Value)
+				-- Event Klik
+				AddConnection(Click.MouseButton1Up, function()
+					Toggle:Set(not Toggle.Value)
+					if OrionLib.SaveCfg then
+						SaveCfg(game.GameId)
+					end
+				end)
 
-                -- Event Klik
-                AddConnection(Click.MouseButton1Up, function()
-                    Toggle:Set(not Toggle.Value)
-                    if OrionLib.SaveCfg then
-                        SaveCfg(game.GameId)
-                    end
-                end)
+				-- Hover effect
+				AddConnection(Click.MouseEnter, function()
+					TweenService:Create(ToggleFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromRGB(OrionLib.Themes[OrionLib.SelectedTheme].Second.R * 255 + 3, OrionLib.Themes[OrionLib.SelectedTheme].Second.G * 255 + 3, OrionLib.Themes[OrionLib.SelectedTheme].Second.B * 255 + 3)}):Play()
+				end)
+				AddConnection(Click.MouseLeave, function()
+					TweenService:Create(ToggleFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {BackgroundColor3 = OrionLib.Themes[OrionLib.SelectedTheme].Second}):Play()
+				end)
 
-                -- Hover effect
-                AddConnection(Click.MouseEnter, function()
-                    TweenService:Create(ToggleFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromRGB(OrionLib.Themes[OrionLib.SelectedTheme].Second.R * 255 + 3, OrionLib.Themes[OrionLib.SelectedTheme].Second.G * 255 + 3, OrionLib.Themes[OrionLib.SelectedTheme].Second.B * 255 + 3)}):Play()
-                end)
-                AddConnection(Click.MouseLeave, function()
-                    TweenService:Create(ToggleFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {BackgroundColor3 = OrionLib.Themes[OrionLib.SelectedTheme].Second}):Play()
-                end)
-
-                if ToggleConfig.Flag then OrionLib.Flags[ToggleConfig.Flag] = Toggle end	
-                return Toggle
-            end
+				if ToggleConfig.Flag then OrionLib.Flags[ToggleConfig.Flag] = Toggle end	
+				return Toggle
+			end
 
 			function ElementFunction:AddSlider(SliderConfig)
 				SliderConfig = SliderConfig or {}
@@ -1528,8 +1558,13 @@ function OrionLib:MakeWindow(WindowConfig)
 				SliderConfig.Color = SliderConfig.Color or Color3.fromRGB(9, 149, 98)
 				SliderConfig.Flag = SliderConfig.Flag or nil
 				SliderConfig.Save = SliderConfig.Save or false
-				local Slider = {Value = SliderConfig.Default, Save = SliderConfig.Save}
+				-- [[ FITUR BARU: OUTLINE CONTROL ]] --
+				SliderConfig.Outline = (SliderConfig.Outline == nil and true) or SliderConfig.Outline
+
+				local Slider = {Value = SliderConfig.Default, Save = SliderConfig.Save, Type = "Slider"}
 				local Dragging = false
+
+				-- Bagian Slider Drag (Isian yang berwarna)
 				local SliderDrag = SetChildren(SetProps(MakeElement("RoundFrame", SliderConfig.Color, 0, 5), {
 					Size = UDim2.new(0, 0, 1, 0),
 					BackgroundTransparency = 0.3,
@@ -1543,6 +1578,8 @@ function OrionLib:MakeWindow(WindowConfig)
 						TextTransparency = 0
 					}), "Text")
 				})
+
+				-- Bagian Slider Bar (Wadah track slider)
 				local SliderBar = SetChildren(SetProps(MakeElement("RoundFrame", SliderConfig.Color, 0, 5), {
 					Size = UDim2.new(1, -24, 0, 26),
 					Position = UDim2.new(0, 12, 0, 30),
@@ -1558,6 +1595,8 @@ function OrionLib:MakeWindow(WindowConfig)
 					}), "Text"),
 					SliderDrag
 				})
+
+				-- Frame Utama Slider
 				local SliderFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 4), {
 					Size = UDim2.new(1, 0, 0, 65),
 					Parent = ItemParent
@@ -1568,9 +1607,14 @@ function OrionLib:MakeWindow(WindowConfig)
 						Font = Enum.Font.GothamBold,
 						Name = "Content"
 					}), "Text"),
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
+					
+					-- [[ UPDATE: HANYA TAMBAHKAN STROKE JIKA OUTLINE AKTIF ]] --
+					(SliderConfig.Outline and AddThemeObject(MakeElement("Stroke"), "Stroke") or nil),
+					
 					SliderBar
 				}), "Second")
+
+				-- Logika Input/Drag
 				SliderBar.InputBegan:Connect(function(Input)
 					if Input.UserInputType == Enum.UserInputType.MouseButton1 then Dragging = true end 
 				end)
@@ -1584,6 +1628,7 @@ function OrionLib:MakeWindow(WindowConfig)
 						SaveCfg(game.GameId)
 					end
 				end)
+
 				function Slider:Set(Value)
 					self.Value = math.clamp(Round(Value, SliderConfig.Increment), SliderConfig.Min, SliderConfig.Max)
 					TweenService:Create(SliderDrag,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Size = UDim2.fromScale((self.Value - SliderConfig.Min) / (SliderConfig.Max - SliderConfig.Min), 1)}):Play()
@@ -1591,241 +1636,234 @@ function OrionLib:MakeWindow(WindowConfig)
 					SliderDrag.Value.Text = tostring(self.Value) .. " " .. SliderConfig.ValueName
 					SliderConfig.Callback(self.Value)
 				end      
+				
 				Slider:Set(Slider.Value)
 				if SliderConfig.Flag then OrionLib.Flags[SliderConfig.Flag] = Slider end
 				return Slider
-			end  
+			end
 
-            -- [[ SOURCE.LUA - UPDATE DROPDOWN: MULTI-SELECT & DESELECT & SEARCH ]] --
+			function ElementFunction:AddDropdown(DropdownConfig)
+				DropdownConfig = DropdownConfig or {}
+				DropdownConfig.Name = DropdownConfig.Name or "Dropdown"
+				DropdownConfig.Options = DropdownConfig.Options or {}
+				DropdownConfig.Default = DropdownConfig.Default or ""
+				DropdownConfig.Multi = DropdownConfig.Multi or false
+				DropdownConfig.Search = DropdownConfig.Search or false 
+				DropdownConfig.AllowNone = (DropdownConfig.AllowNone == nil and true) or DropdownConfig.AllowNone
+				DropdownConfig.Callback = DropdownConfig.Callback or function() end
+				DropdownConfig.Flag = DropdownConfig.Flag or nil
+				DropdownConfig.Save = DropdownConfig.Save or false
+				-- [[ FITUR BARU: OUTLINE CONTROL ]] --
+				DropdownConfig.Outline = (DropdownConfig.Outline == nil and true) or DropdownConfig.Outline
 
-            function ElementFunction:AddDropdown(DropdownConfig)
-                DropdownConfig = DropdownConfig or {}
-                DropdownConfig.Name = DropdownConfig.Name or "Dropdown"
-                DropdownConfig.Options = DropdownConfig.Options or {}
-                DropdownConfig.Default = DropdownConfig.Default or ""
-                DropdownConfig.Multi = DropdownConfig.Multi or false -- FITUR BARU: Pilihan Ganda
-                DropdownConfig.Search = DropdownConfig.Search or false 
-                DropdownConfig.AllowNone = (DropdownConfig.AllowNone == nil and true) or DropdownConfig.AllowNone
-                DropdownConfig.Callback = DropdownConfig.Callback or function() end
-                DropdownConfig.Flag = DropdownConfig.Flag or nil
-                DropdownConfig.Save = DropdownConfig.Save or false
-                
+				-- Inisialisasi Value
+				local Dropdown = {
+					Value = DropdownConfig.Multi and {} or DropdownConfig.Default, 
+					Options = DropdownConfig.Options, 
+					Buttons = {}, 
+					Toggled = false, 
+					Type = "Dropdown", 
+					Save = DropdownConfig.Save
+				}
+				
+				local MaxElements = 5
+				local ContainerYOffset = DropdownConfig.Search and 72 or 38
+				
+				local DropdownList = MakeElement("List")
+				local DropdownContainer = AddThemeObject(SetProps(SetChildren(MakeElement("ScrollFrame", Color3.fromRGB(40, 40, 40), 4), {DropdownList}), {
+					Position = UDim2.new(0, 0, 0, ContainerYOffset),
+					Size = UDim2.new(1, 0, 1, -ContainerYOffset),
+					ClipsDescendants = true
+				}), "Divider")
 
-                -- Inisialisasi Value (Kalau Multi pake Tabel, kalau Single pake String)
-                local Dropdown = {
-                    Value = DropdownConfig.Multi and {} or DropdownConfig.Default, 
-                    Options = DropdownConfig.Options, 
-                    Buttons = {}, 
-                    Toggled = false, 
-                    Type = "Dropdown", 
-                    Save = DropdownConfig.Save
-                }
-                
-                local MaxElements = 5
-                local ContainerYOffset = DropdownConfig.Search and 72 or 38
-                
-                local DropdownList = MakeElement("List")
-                local DropdownContainer = AddThemeObject(SetProps(SetChildren(MakeElement("ScrollFrame", Color3.fromRGB(40, 40, 40), 4), {DropdownList}), {
-                    Position = UDim2.new(0, 0, 0, ContainerYOffset),
-                    Size = UDim2.new(1, 0, 1, -ContainerYOffset),
-                    ClipsDescendants = true
-                }), "Divider")
+				local Click = SetProps(MakeElement("Button"), { Size = UDim2.new(1, 0, 1, 0) })
+				
+				local DropdownFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
+					Size = UDim2.new(1, 0, 0, 38),
+					Parent = ItemParent,
+					ClipsDescendants = true,
+					BackgroundTransparency = WindowConfig.WindowTransparency
+				}), {
+					DropdownContainer,
+					SetProps(SetChildren(MakeElement("TFrame"), {
+						AddThemeObject(SetProps(MakeElement("Label", DropdownConfig.Name, 15), {
+							Size = UDim2.new(1, -12, 1, 0),
+							Position = UDim2.new(0, 12, 0, 0),
+							Font = Enum.Font.GothamBold,
+							Name = "Content"
+						}), "Text"),
+						AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://7072706796"), {
+							Size = UDim2.new(0, 20, 0, 20),
+							AnchorPoint = Vector2.new(0, 0.5),
+							Position = UDim2.new(1, -30, 0.5, 0),
+							Name = "Ico"
+						}), "TextDark"),
+						AddThemeObject(SetProps(MakeElement("Label", "...", 13), {
+							Size = UDim2.new(1, -40, 1, 0),
+							Font = Enum.Font.Gotham,
+							Name = "Selected",
+							TextXAlignment = Enum.TextXAlignment.Right
+						}), "TextDark"),
+						AddThemeObject(SetProps(MakeElement("Frame"), {
+							Size = UDim2.new(1, 0, 0, 1),
+							Position = UDim2.new(0, 0, 1, -1),
+							Name = "Line",
+							Visible = false
+						}), "Stroke"), 
+						Click
+					}), {Size = UDim2.new(1, 0, 0, 38), ClipsDescendants = true, Name = "F"}),
+					
+					-- [[ UPDATE: HANYA TAMBAHKAN STROKE JIKA OUTLINE AKTIF ]] --
+					(DropdownConfig.Outline and AddThemeObject(MakeElement("Stroke"), "Stroke") or nil),
+					
+					MakeElement("Corner")
+				}), "Second")
 
-                local Click = SetProps(MakeElement("Button"), { Size = UDim2.new(1, 0, 1, 0) })
-                
-                local DropdownFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
-                    Size = UDim2.new(1, 0, 0, 38),
-                    Parent = ItemParent,
-                    ClipsDescendants = true,
-                    BackgroundTransparency = WindowConfig.WindowTransparency
-                }), {
-                    DropdownContainer,
-                    SetProps(SetChildren(MakeElement("TFrame"), {
-                        AddThemeObject(SetProps(MakeElement("Label", DropdownConfig.Name, 15), {
-                            Size = UDim2.new(1, -12, 1, 0),
-                            Position = UDim2.new(0, 12, 0, 0),
-                            Font = Enum.Font.GothamBold,
-                            Name = "Content"
-                        }), "Text"),
-                        AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://7072706796"), {
-                            Size = UDim2.new(0, 20, 0, 20),
-                            AnchorPoint = Vector2.new(0, 0.5),
-                            Position = UDim2.new(1, -30, 0.5, 0),
-                            Name = "Ico"
-                        }), "TextDark"),
-                        AddThemeObject(SetProps(MakeElement("Label", "...", 13), {
-                            Size = UDim2.new(1, -40, 1, 0),
-                            Font = Enum.Font.Gotham,
-                            Name = "Selected",
-                            TextXAlignment = Enum.TextXAlignment.Right
-                        }), "TextDark"),
-                        AddThemeObject(SetProps(MakeElement("Frame"), {
-                            Size = UDim2.new(1, 0, 0, 1),
-                            Position = UDim2.new(0, 0, 1, -1),
-                            Name = "Line",
-                            Visible = false
-                        }), "Stroke"), 
-                        Click
-                    }), {Size = UDim2.new(1, 0, 0, 38), ClipsDescendants = true, Name = "F"}),
-                    AddThemeObject(MakeElement("Stroke"), "Stroke"),
-                    MakeElement("Corner")
-                }), "Second")
+				local function UpdateSelectedText()
+					if DropdownConfig.Multi then
+						if type(Dropdown.Value) ~= "table" then Dropdown.Value = {} end
+						
+						if #Dropdown.Value == 0 then
+							DropdownFrame.F.Selected.Text = "..."
+						else
+							local DisplayList = {}
+							for _, v in ipairs(Dropdown.Value) do
+								if type(v) ~= "table" then
+									table.insert(DisplayList, tostring(v))
+								end
+							end
+							DropdownFrame.F.Selected.Text = table.concat(DisplayList, ", ")
+						end
+					else
+						-- Single Select Logic
+						if type(Dropdown.Value) == "table" then
+							Dropdown.Value = Dropdown.Value[1] or ""
+						end
+						local DisplayValue = tostring(Dropdown.Value or "")
+						DropdownFrame.F.Selected.Text = (DisplayValue == "" or DisplayValue == "nil") and "..." or DisplayValue
+					end
+				end
 
-                -- [[ SOURCE.LUA - FIXED DROPDOWN DISPLAY BUG ]] --
+				function Dropdown:Set(Value)
+					if DropdownConfig.Multi then
+						if type(Value) == "table" then
+							Dropdown.Value = Value
+						else
+							if type(Dropdown.Value) ~= "table" then Dropdown.Value = {} end
+							local FoundIndex = table.find(Dropdown.Value, Value)
+							if FoundIndex then
+								if DropdownConfig.AllowNone or #Dropdown.Value > 1 then
+									table.remove(Dropdown.Value, FoundIndex)
+								end
+							else
+								table.insert(Dropdown.Value, Value)
+							end
+						end
+					else
+						local NewValue = type(Value) == "table" and Value[1] or Value
+						Dropdown.Value = NewValue
+					end
 
-                local function UpdateSelectedText()
-                    if DropdownConfig.Multi then
-                        -- Pastikan variabel adalah tabel
-                        if type(Dropdown.Value) ~= "table" then Dropdown.Value = {} end
-                        
-                        if #Dropdown.Value == 0 then
-                            DropdownFrame.F.Selected.Text = "..."
-                        else
-                            -- Membersihkan tampilan: Pastikan hanya nama string yang digabung
-                            local DisplayList = {}
-                            for _, v in ipairs(Dropdown.Value) do
-                                -- Pastikan v bukan tabel agar tidak muncul "table: 0x..."
-                                if type(v) ~= "table" then
-                                    table.insert(DisplayList, tostring(v))
-                                end
-                            end
-                            DropdownFrame.F.Selected.Text = table.concat(DisplayList, ", ")
-                        end
-                    else
-                        -- Untuk Single-Select: Jika tidak sengaja terisi tabel, ambil item pertama atau kosongkan
-                        if type(Dropdown.Value) == "table" then
-                            Dropdown.Value = Dropdown.Value[1] or ""
-                        end
-                        
-                        local DisplayValue = tostring(Dropdown.Value or "")
-                        DropdownFrame.F.Selected.Text = (DisplayValue == "" or DisplayValue == "nil") and "..." or DisplayValue
-                    end
-                end
+					-- Update Visual Tombol
+					for Name, Btn in pairs(Dropdown.Buttons) do
+						local IsActive = false
+						if DropdownConfig.Multi then
+							IsActive = table.find(Dropdown.Value, Name)
+						else
+							IsActive = (Dropdown.Value == Name)
+						end
+						
+						TweenService:Create(Btn, TweenInfo.new(.15), {BackgroundTransparency = IsActive and 0 or 1}):Play()
+						TweenService:Create(Btn.Title, TweenInfo.new(.15), {TextTransparency = IsActive and 0 or 0.4}):Play()
+					end
 
-                -- [[ FIX LOGIKA DROPDOWN DI SOURCE.LUA ]] --
+					UpdateSelectedText()
+					return DropdownConfig.Callback(Dropdown.Value)
+				end
 
-                function Dropdown:Set(Value)
-                    if DropdownConfig.Multi then
-                        if type(Value) == "table" then
-                            Dropdown.Value = Value
-                        else
-                            if type(Dropdown.Value) ~= "table" then Dropdown.Value = {} end
-                            local FoundIndex = table.find(Dropdown.Value, Value)
-                            if FoundIndex then
-                                if DropdownConfig.AllowNone or #Dropdown.Value > 1 then
-                                    table.remove(Dropdown.Value, FoundIndex)
-                                end
-                            else
-                                table.insert(Dropdown.Value, Value)
-                            end
-                        end
-                    else
-                        -- FIX: Jangan batalkan pilihan kalau nilainya sama saat startup
-                        local NewValue = type(Value) == "table" and Value[1] or Value
-                        Dropdown.Value = NewValue
-                    end
+				if DropdownConfig.Search then
+					local SearchFrame = AddThemeObject(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
+						Size = UDim2.new(1, -20, 0, 28),
+						Position = UDim2.new(0, 10, 0, 38),
+						Parent = DropdownFrame,
+						BackgroundTransparency = 0.8
+					}), "Main")
 
-                    -- Update Visual Tombol
-                    for Name, Btn in pairs(Dropdown.Buttons) do
-                        local IsActive = false
-                        if DropdownConfig.Multi then
-                            IsActive = table.find(Dropdown.Value, Name)
-                        else
-                            IsActive = (Dropdown.Value == Name)
-                        end
-                        
-                        TweenService:Create(Btn, TweenInfo.new(.15), {BackgroundTransparency = IsActive and 0 or 1}):Play()
-                        TweenService:Create(Btn.Title, TweenInfo.new(.15), {TextTransparency = IsActive and 0 or 0.4}):Play()
-                    end
+					local SearchInput = AddThemeObject(Create("TextBox", {
+						Parent = SearchFrame,
+						Size = UDim2.new(1, -10, 1, 0),
+						Position = UDim2.new(0, 5, 0, 0),
+						BackgroundTransparency = 1,
+						Text = "",
+						PlaceholderText = "Search...",
+						PlaceholderColor3 = Color3.fromRGB(150, 150, 150),
+						Font = Enum.Font.Gotham,
+						TextSize = 13,
+						TextColor3 = Color3.fromRGB(255, 255, 255),
+						ClearTextOnFocus = false
+					}), "Text")
 
-                    UpdateSelectedText()
-                    return DropdownConfig.Callback(Dropdown.Value)
-                end
+					SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
+						local Input = SearchInput.Text:lower()
+						for Name, Button in pairs(Dropdown.Buttons) do
+							Button.Visible = string.find(Name:lower(), Input) and true or false
+						end
+					end)
+				end
 
-                -- (Logika Search Bar & Refresh tetap sama seperti sebelumnya)
-                if DropdownConfig.Search then
-                    local SearchFrame = AddThemeObject(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
-                        Size = UDim2.new(1, -20, 0, 28),
-                        Position = UDim2.new(0, 10, 0, 38),
-                        Parent = DropdownFrame,
-                        BackgroundTransparency = 0.8
-                    }), "Main")
+				local function AddOptions(Options)
+					for _, Option in pairs(Options) do
+						local OptionBtn = AddThemeObject(SetProps(SetChildren(MakeElement("Button", Color3.fromRGB(40, 40, 40)), {
+							MakeElement("Corner", 0, 6),
+							AddThemeObject(SetProps(MakeElement("Label", Option, 13, 0.4), {
+								Position = UDim2.new(0, 8, 0, 0),
+								Size = UDim2.new(1, -8, 1, 0),
+								Name = "Title"
+							}), "Text")
+						}), {
+							Parent = DropdownContainer,
+							Size = UDim2.new(1, 0, 0, 28),
+							BackgroundTransparency = 1,
+							ClipsDescendants = true
+						}), "Divider")
+						
+						AddConnection(OptionBtn.MouseButton1Click, function()
+							Dropdown:Set(Option)
+							if OrionLib.SaveCfg then SaveCfg(game.GameId) end
+						end)
+						Dropdown.Buttons[Option] = OptionBtn
+					end
+				end	
 
-                    local SearchInput = AddThemeObject(Create("TextBox", {
-                        Parent = SearchFrame,
-                        Size = UDim2.new(1, -10, 1, 0),
-                        Position = UDim2.new(0, 5, 0, 0),
-                        BackgroundTransparency = 1,
-                        Text = "",
-                        PlaceholderText = "Search...",
-                        PlaceholderColor3 = Color3.fromRGB(150, 150, 150),
-                        Font = Enum.Font.Gotham,
-                        TextSize = 13,
-                        TextColor3 = Color3.fromRGB(255, 255, 255),
-                        ClearTextOnFocus = false
-                    }), "Text")
+				function Dropdown:Refresh(Options, Delete)
+					if Delete then
+						for _,v in pairs(Dropdown.Buttons) do v:Destroy() end    
+						table.clear(Dropdown.Buttons)
+					end
+					Dropdown.Options = Options
+					AddOptions(Dropdown.Options)
+				end  
 
-                    SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
-                        local Input = SearchInput.Text:lower()
-                        for Name, Button in pairs(Dropdown.Buttons) do
-                            Button.Visible = string.find(Name:lower(), Input) and true or false
-                        end
-                    end)
-                end
+				AddConnection(Click.MouseButton1Click, function()
+					Dropdown.Toggled = not Dropdown.Toggled
+					DropdownFrame.F.Line.Visible = Dropdown.Toggled
+					TweenService:Create(DropdownFrame.F.Ico, TweenInfo.new(.15), {Rotation = Dropdown.Toggled and 180 or 0}):Play()
+					
+					local TargetHeight = 38
+					if Dropdown.Toggled then
+						local ContentHeight = DropdownList.AbsoluteContentSize.Y + ContainerYOffset
+						TargetHeight = math.min(ContentHeight, 38 + (MaxElements * 28) + (DropdownConfig.Search and 34 or 0))
+					end
+					TweenService:Create(DropdownFrame, TweenInfo.new(.15), {Size = UDim2.new(1, 0, 0, TargetHeight)}):Play()
+				end)
 
-                local function AddOptions(Options)
-                    for _, Option in pairs(Options) do
-                        local OptionBtn = AddThemeObject(SetProps(SetChildren(MakeElement("Button", Color3.fromRGB(40, 40, 40)), {
-                            MakeElement("Corner", 0, 6),
-                            AddThemeObject(SetProps(MakeElement("Label", Option, 13, 0.4), {
-                                Position = UDim2.new(0, 8, 0, 0),
-                                Size = UDim2.new(1, -8, 1, 0),
-                                Name = "Title"
-                            }), "Text")
-                        }), {
-                            Parent = DropdownContainer,
-                            Size = UDim2.new(1, 0, 0, 28),
-                            BackgroundTransparency = 1,
-                            ClipsDescendants = true
-                        }), "Divider")
-                        
-                        AddConnection(OptionBtn.MouseButton1Click, function()
-                            Dropdown:Set(Option)
-                            if OrionLib.SaveCfg then SaveCfg(game.GameId) end
-                        end)
-                        Dropdown.Buttons[Option] = OptionBtn
-                    end
-                end	
-
-                function Dropdown:Refresh(Options, Delete)
-                    if Delete then
-                        for _,v in pairs(Dropdown.Buttons) do v:Destroy() end    
-                        table.clear(Dropdown.Buttons)
-                    end
-                    Dropdown.Options = Options
-                    AddOptions(Dropdown.Options)
-                end  
-
-                AddConnection(Click.MouseButton1Click, function()
-                    Dropdown.Toggled = not Dropdown.Toggled
-                    DropdownFrame.F.Line.Visible = Dropdown.Toggled
-                    TweenService:Create(DropdownFrame.F.Ico, TweenInfo.new(.15), {Rotation = Dropdown.Toggled and 180 or 0}):Play()
-                    
-                    local TargetHeight = 38
-                    if Dropdown.Toggled then
-                        local ContentHeight = DropdownList.AbsoluteContentSize.Y + ContainerYOffset
-                        TargetHeight = math.min(ContentHeight, 38 + (MaxElements * 28) + (DropdownConfig.Search and 34 or 0))
-                    end
-                    TweenService:Create(DropdownFrame, TweenInfo.new(.15), {Size = UDim2.new(1, 0, 0, TargetHeight)}):Play()
-                end)
-
-                Dropdown:Refresh(Dropdown.Options, false)
-                Dropdown:Set(Dropdown.Value)
-                UpdateSelectedText()
-                
-                if DropdownConfig.Flag then OrionLib.Flags[DropdownConfig.Flag] = Dropdown end
-                return Dropdown
-            end
+				Dropdown:Refresh(Dropdown.Options, false)
+				Dropdown:Set(Dropdown.Value)
+				UpdateSelectedText()
+				
+				if DropdownConfig.Flag then OrionLib.Flags[DropdownConfig.Flag] = Dropdown end
+				return Dropdown
+			end
 
 			function ElementFunction:AddBind(BindConfig)
 				BindConfig.Name = BindConfig.Name or "Bind"
@@ -1834,15 +1872,20 @@ function OrionLib:MakeWindow(WindowConfig)
 				BindConfig.Callback = BindConfig.Callback or function() end
 				BindConfig.Flag = BindConfig.Flag or nil
 				BindConfig.Save = BindConfig.Save or false
+				-- [[ FITUR BARU: OUTLINE CONTROL ]] --
+				BindConfig.Outline = (BindConfig.Outline == nil and true) or BindConfig.Outline
+
 				local Bind = {Value, Binding = false, Type = "Bind", Save = BindConfig.Save}
 				local Holding = false
 				local Click = SetProps(MakeElement("Button"), { Size = UDim2.new(1, 0, 1, 0) })
+				
+				-- BindBox (Kotak Kecil Tombol) - Tetap pakai Stroke biar kelihatan kotak inputnya
 				local BindBox = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 4), {
 					Size = UDim2.new(0, 24, 0, 24),
 					Position = UDim2.new(1, -12, 0.5, 0),
 					AnchorPoint = Vector2.new(1, 0.5)
 				}), {
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
+					AddThemeObject(MakeElement("Stroke"), "Stroke"), 
 					AddThemeObject(SetProps(MakeElement("Label", BindConfig.Name, 14), {
 						Size = UDim2.new(1, 0, 1, 0),
 						Font = Enum.Font.GothamBold,
@@ -1850,6 +1893,8 @@ function OrionLib:MakeWindow(WindowConfig)
 						Name = "Value"
 					}), "Text")
 				}), "Main")
+
+				-- BindFrame (Frame Utama Panjang)
 				local BindFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
 					Size = UDim2.new(1, 0, 0, 38),
 					Parent = ItemParent
@@ -1860,10 +1905,14 @@ function OrionLib:MakeWindow(WindowConfig)
 						Font = Enum.Font.GothamBold,
 						Name = "Content"
 					}), "Text"),
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
+					
+					-- [[ UPDATE: HANYA TAMBAHKAN STROKE JIKA OUTLINE AKTIF ]] --
+					(BindConfig.Outline and AddThemeObject(MakeElement("Stroke"), "Stroke") or nil),
+					
 					BindBox,
 					Click
 				}), "Second")
+
 				AddConnection(BindBox.Value:GetPropertyChangedSignal("Text"), function()
 					TweenService:Create(BindBox, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, BindBox.Value.TextBounds.X + 16, 0, 24)}):Play()
 				end)
@@ -1921,7 +1970,7 @@ function OrionLib:MakeWindow(WindowConfig)
 				Bind:Set(BindConfig.Default)
 				if BindConfig.Flag then OrionLib.Flags[BindConfig.Flag] = Bind end
 				return Bind
-			end  
+			end
 
 			function ElementFunction:AddTextbox(TextboxConfig)
 				TextboxConfig = TextboxConfig or {}
@@ -1929,7 +1978,11 @@ function OrionLib:MakeWindow(WindowConfig)
 				TextboxConfig.Default = TextboxConfig.Default or ""
 				TextboxConfig.TextDisappear = TextboxConfig.TextDisappear or false
 				TextboxConfig.Callback = TextboxConfig.Callback or function() end
+				-- [[ FITUR BARU: OUTLINE CONTROL ]] --
+				TextboxConfig.Outline = (TextboxConfig.Outline == nil and true) or TextboxConfig.Outline
+
 				local Click = SetProps(MakeElement("Button"), { Size = UDim2.new(1, 0, 1, 0) })
+				
 				local TextboxActual = AddThemeObject(Create("TextBox", {
 					Size = UDim2.new(1, 0, 1, 0),
 					BackgroundTransparency = 1,
@@ -1941,14 +1994,18 @@ function OrionLib:MakeWindow(WindowConfig)
 					TextSize = 14,
 					ClearTextOnFocus = false
 				}), "Text")
+				
+				-- Container Input (Tetap pakai Stroke biar kelihatan kotak inputnya)
 				local TextContainer = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 4), {
 					Size = UDim2.new(0, 24, 0, 24),
 					Position = UDim2.new(1, -12, 0.5, 0),
 					AnchorPoint = Vector2.new(1, 0.5)
 				}), {
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
+					AddThemeObject(MakeElement("Stroke"), "Stroke"), 
 					TextboxActual
 				}), "Main")
+
+				-- Frame Utama
 				local TextboxFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
 					Size = UDim2.new(1, 0, 0, 38),
 					Parent = ItemParent
@@ -1959,10 +2016,14 @@ function OrionLib:MakeWindow(WindowConfig)
 						Font = Enum.Font.GothamBold,
 						Name = "Content"
 					}), "Text"),
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
+					
+					-- [[ UPDATE: HANYA TAMBAHKAN STROKE JIKA OUTLINE AKTIF ]] --
+					(TextboxConfig.Outline and AddThemeObject(MakeElement("Stroke"), "Stroke") or nil),
+					
 					TextContainer,
 					Click
 				}), "Second")
+
 				AddConnection(TextboxActual:GetPropertyChangedSignal("Text"), function()
 					TweenService:Create(TextContainer, TweenInfo.new(0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, TextboxActual.TextBounds.X + 16, 0, 24)}):Play()
 				end)
@@ -1984,7 +2045,7 @@ function OrionLib:MakeWindow(WindowConfig)
 				AddConnection(Click.MouseButton1Down, function()
 					TweenService:Create(TextboxFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(OrionLib.Themes[OrionLib.SelectedTheme].Second.R * 255 + 6, OrionLib.Themes[OrionLib.SelectedTheme].Second.G * 255 + 6, OrionLib.Themes[OrionLib.SelectedTheme].Second.B * 255 + 6)}):Play()
 				end)
-			end 
+			end
 
 			function ElementFunction:AddColorpicker(ColorpickerConfig)
 				ColorpickerConfig = ColorpickerConfig or {}
@@ -1993,8 +2054,12 @@ function OrionLib:MakeWindow(WindowConfig)
 				ColorpickerConfig.Callback = ColorpickerConfig.Callback or function() end
 				ColorpickerConfig.Flag = ColorpickerConfig.Flag or nil
 				ColorpickerConfig.Save = ColorpickerConfig.Save or false
+				-- [[ FITUR BARU: OUTLINE CONTROL ]] --
+				ColorpickerConfig.Outline = (ColorpickerConfig.Outline == nil and true) or ColorpickerConfig.Outline
+
 				local ColorH, ColorS, ColorV = 1, 1, 1
 				local Colorpicker = {Value = ColorpickerConfig.Default, Toggled = false, Type = "Colorpicker", Save = ColorpickerConfig.Save}
+				
 				local ColorSelection = Create("ImageLabel", {
 					Size = UDim2.new(0, 18, 0, 18),
 					Position = UDim2.new(select(3, Color3.toHSV(Colorpicker.Value))),
@@ -2044,6 +2109,8 @@ function OrionLib:MakeWindow(WindowConfig)
 					})
 				})
 				local Click = SetProps(MakeElement("Button"), { Size = UDim2.new(1, 0, 1, 0) })
+				
+				-- ColorpickerBox (Kotak Preview Warna Kecil) - Tetap pakai stroke biar jelas
 				local ColorpickerBox = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 4), {
 					Size = UDim2.new(0, 24, 0, 24),
 					Position = UDim2.new(1, -12, 0.5, 0),
@@ -2051,6 +2118,8 @@ function OrionLib:MakeWindow(WindowConfig)
 				}), {
 					AddThemeObject(MakeElement("Stroke"), "Stroke")
 				}), "Main")
+
+				-- Frame Utama
 				local ColorpickerFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
 					Size = UDim2.new(1, 0, 0, 38),
 					Parent = ItemParent
@@ -2076,8 +2145,12 @@ function OrionLib:MakeWindow(WindowConfig)
 						Name = "F"
 					}),
 					ColorpickerContainer,
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
+					
+					-- [[ UPDATE: HANYA TAMBAHKAN STROKE JIKA OUTLINE AKTIF ]] --
+					(ColorpickerConfig.Outline and AddThemeObject(MakeElement("Stroke"), "Stroke") or nil),
+				
 				}), "Second")
+
 				AddConnection(Click.MouseButton1Click, function()
 					Colorpicker.Toggled = not Colorpicker.Toggled
 					TweenService:Create(ColorpickerFrame,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Size = Colorpicker.Toggled and UDim2.new(1, 0, 0, 148) or UDim2.new(1, 0, 0, 38)}):Play()
@@ -2085,6 +2158,7 @@ function OrionLib:MakeWindow(WindowConfig)
 					Hue.Visible = Colorpicker.Toggled
 					ColorpickerFrame.F.Line.Visible = Colorpicker.Toggled
 				end)
+				
 				local function UpdateColorPicker()
 					ColorpickerBox.BackgroundColor3 = Color3.fromHSV(ColorH, ColorS, ColorV)
 					Color.BackgroundColor3 = Color3.fromHSV(ColorH, 1, 1)
@@ -2092,9 +2166,11 @@ function OrionLib:MakeWindow(WindowConfig)
 					ColorpickerConfig.Callback(ColorpickerBox.BackgroundColor3)
 					SaveCfg(game.GameId)
 				end
+				
 				ColorH = 1 - (math.clamp(HueSelection.AbsolutePosition.Y - Hue.AbsolutePosition.Y, 0, Hue.AbsoluteSize.Y) / Hue.AbsoluteSize.Y)
 				ColorS = (math.clamp(ColorSelection.AbsolutePosition.X - Color.AbsolutePosition.X, 0, Color.AbsoluteSize.X) / Color.AbsoluteSize.X)
 				ColorV = 1 - (math.clamp(ColorSelection.AbsolutePosition.Y - Color.AbsolutePosition.Y, 0, Color.AbsoluteSize.Y) / Color.AbsoluteSize.Y)
+				
 				AddConnection(Color.InputBegan, function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 then
 						if ColorInput then ColorInput:Disconnect() end
@@ -2139,78 +2215,101 @@ function OrionLib:MakeWindow(WindowConfig)
 				return Colorpicker
 			end  
 			
-            -- [[ SOURCE.LUA - UPGRADED ADDSECTION ]] --
-
             function ElementFunction:AddSection(SectionConfig)
-                SectionConfig.Name = SectionConfig.Name or "Section"
-                SectionConfig.TextSize = SectionConfig.TextSize or 17 -- Ukuran teks lebih gede
-                SectionConfig.Font = SectionConfig.Font or Enum.Font.GothamBold -- Font default lebih tebal
-                SectionConfig.Folded = SectionConfig.Folded or false -- Opsi awal tertutup
+				SectionConfig.Name = SectionConfig.Name or "Section"
+				SectionConfig.TextSize = SectionConfig.TextSize or 17
+				SectionConfig.Font = SectionConfig.Font or Enum.Font.GothamBold
+				SectionConfig.Folded = SectionConfig.Folded or false
+				-- [[ FITUR BARU: SECTION BOX ]] --
+				SectionConfig.Glass = SectionConfig.Glass or false
+				SectionConfig.Outline = (SectionConfig.Outline == nil and true) or SectionConfig.Outline
 
-                local SectionCollapsed = SectionConfig.Folded
-                
-                local SectionFrame = SetChildren(SetProps(MakeElement("TFrame"), {
-                    Size = UDim2.new(1, 0, 0, 26), -- Akan diatur ulang di bawah
-                    Parent = ItemParent,
-                    ClipsDescendants = true 
-                }), {
-                    AddThemeObject(SetProps(MakeElement("Label", SectionConfig.Name, SectionConfig.TextSize), {
-                        Size = UDim2.new(1, -30, 0, 26), 
-                        Position = UDim2.new(0, 0, 0, 0), 
-                        TextYAlignment = Enum.TextYAlignment.Center, 
-                        Font = SectionConfig.Font -- Menggunakan custom font
-                    }), "Text"),
-                    SetChildren(SetProps(MakeElement("TFrame"), {
-                        AnchorPoint = Vector2.new(0, 0),
-                        Size = UDim2.new(1, 0, 0, 0), -- Ukuran holder awal
-                        Position = UDim2.new(0, 0, 0, 28),
-                        Name = "Holder"
-                    }), {
-                        MakeElement("List", 0, 6)
-                    }),
-                })
+				local SectionCollapsed = SectionConfig.Folded
+				
+				-- Logika Visual Box
+				-- Jika Glass nyala, transparansi lebih tinggi (lebih tembus pandang)
+				local BoxTransparency = SectionConfig.Glass and 0.85 or 1 
+				-- Warna dasar (putih), nanti akan diwarnai oleh Theme kalau dia bukan Glass
+				local BoxColor = Color3.fromRGB(255, 255, 255) 
 
-                local FoldBtn = SetProps(MakeElement("ImageButton", "rbxassetid://92473583511724"), { 
-                    Parent = SectionFrame,
-                    Size = UDim2.new(0, 20, 0, 20),
-                    Position = UDim2.new(1, -25, 0, 3), 
-                    ImageColor3 = Color3.fromRGB(150, 150, 150),
-                    BackgroundTransparency = 1,
-                    Rotation = SectionCollapsed and -90 or 0 -- Atur rotasi awal
-                })
+				-- Frame Utama Section
+				local SectionFrame = SetChildren(SetProps(MakeElement("RoundFrame", BoxColor, 0, 6), {
+					Size = UDim2.new(1, 0, 0, 26),
+					Parent = ItemParent,
+					ClipsDescendants = true,
+					BackgroundTransparency = BoxTransparency
+				}), {
+					-- Jika Glass aktif, kita pakai Theme "Second" untuk backgroundnya biar agak gelap dikit tapi transparan
+					(SectionConfig.Glass and AddThemeObject(SetProps(MakeElement("Frame"), {Size=UDim2.new(0,0,0,0)}), "Second") or nil),
+					
+					-- Judul Section
+					AddThemeObject(SetProps(MakeElement("Label", SectionConfig.Name, SectionConfig.TextSize), {
+						Size = UDim2.new(1, -30, 0, 30), -- Header Height
+						Position = UDim2.new(0, 10, 0, 0), 
+						TextYAlignment = Enum.TextYAlignment.Center, 
+						Font = SectionConfig.Font
+					}), "Text"),
+					
+					-- Holder (Tempat isi elemen)
+					SetChildren(SetProps(MakeElement("TFrame"), {
+						AnchorPoint = Vector2.new(0, 0),
+						Size = UDim2.new(1, -10, 0, 0), -- Ada padding dikit kiri kanan
+						Position = UDim2.new(0, 5, 0, 34), -- Turun di bawah header
+						Name = "Holder"
+					}), {
+						MakeElement("List", 0, 6)
+					})
+				})
+				
+				-- Tambah Outline ke Section Box HANYA JIKA diminta
+				if SectionConfig.Outline then
+					AddThemeObject(MakeElement("Stroke", nil, 1), "Stroke").Parent = SectionFrame
+				end
 
-                -- Logika Update Ukuran Otomatis
-                AddConnection(SectionFrame.Holder.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-                    if not SectionCollapsed then
-                        SectionFrame.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y + 33)
-                        SectionFrame.Holder.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y)
-                    end
-                end)
+				-- Tombol Fold (Panah kecil di kanan)
+				local FoldBtn = SetProps(MakeElement("ImageButton", "rbxassetid://92473583511724"), { 
+					Parent = SectionFrame,
+					Size = UDim2.new(0, 20, 0, 20),
+					Position = UDim2.new(1, -25, 0, 5), 
+					ImageColor3 = Color3.fromRGB(150, 150, 150),
+					BackgroundTransparency = 1,
+					Rotation = SectionCollapsed and -90 or 0
+				})
 
-                -- Set Status Awal (Jika Folded = true)
-                if SectionCollapsed then
-                    SectionFrame.Size = UDim2.new(1, 0, 0, 26)
-                end
+				-- Update Ukuran Otomatis (Box Height)
+				AddConnection(SectionFrame.Holder.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+					if not SectionCollapsed then
+						-- Tinggi Box = Tinggi Konten + Header + Padding Bawah
+						SectionFrame.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y + 40)
+						SectionFrame.Holder.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y)
+					end
+				end)
 
-                AddConnection(FoldBtn.MouseButton1Click, function()
-                    SectionCollapsed = not SectionCollapsed
-                    if SectionCollapsed then
-                        TweenService:Create(FoldBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Rotation = -90}):Play() 
-                        TweenService:Create(SectionFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Size = UDim2.new(1, 0, 0, 26)}):Play() 
-                    else
-                        TweenService:Create(FoldBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Rotation = 0}):Play()
-                        TweenService:Create(SectionFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
-                            Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y + 33)
-                        }):Play()
-                    end
-                end)
+				if SectionCollapsed then
+					SectionFrame.Size = UDim2.new(1, 0, 0, 30) -- Hanya header
+				end
 
-                local SectionFunction = {}
-                for i, v in next, GetElements(SectionFrame.Holder) do
-                    SectionFunction[i] = v 
-                end
-                return SectionFunction
-            end
+				AddConnection(FoldBtn.MouseButton1Click, function()
+					SectionCollapsed = not SectionCollapsed
+					if SectionCollapsed then
+						TweenService:Create(FoldBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Rotation = -90}):Play() 
+						TweenService:Create(SectionFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Size = UDim2.new(1, 0, 0, 30)}):Play() 
+					else
+						TweenService:Create(FoldBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Rotation = 0}):Play()
+						TweenService:Create(SectionFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
+							Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y + 40)
+						}):Play()
+					end
+				end)
+
+				-- INI BAGIAN PENTING: Mengembalikan fungsi elemen agar bisa dimasukkan ke dalam section ini
+				local SectionFunction = {}
+				-- Kita panggil GetElements lagi tapi parent-nya adalah SectionFrame.Holder
+				for i, v in next, GetElements(SectionFrame.Holder) do
+					SectionFunction[i] = v 
+				end
+				return SectionFunction
+			end
 
 			return ElementFunction   
 		end	
