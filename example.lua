@@ -1,164 +1,215 @@
 -- [[ 1. INITIALIZATION ]] --
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/nurvian/Catraz-x-Orion-UI/refs/heads/main/source.lua"))()
+-- GANTI LINK DI BAWAH INI DENGAN LINK RAW SOURCE.LUA HASIL MODIFIKASI KITA TADI
+-- Kalau kamu tes di executor langsung (local file), gunakan readfile/loadfile
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/nurvian/Catraz-x-Orion-UI/refs/heads/main/source.lua"))() 
 local LPlayer = game:GetService("Players").LocalPlayer
-
--- [[ 2. WINDOW CONFIGURATION ]] --
--- Menggunakan fitur Header baru: Subtext, Version Tag, dan Icon Lucide
-local Window = OrionLib:MakeWindow({
+local WindowConfig = {
     Name = "Catraz Hub",
-    Subtext = "GENESIS ID | Official Community Hub", --
-    Version = "v9.6.6-STABLE",
-    VersionIcon = "crown", -- Icon mahkota pro
-    TagColor = Color3.fromRGB(120, 20, 20), -- Warna tag kustom
+    Subtext = "Premium Script Hub | " .. os.date("%A, %B %d"), -- Menampilkan Tanggal
+    Version = "v2.5-PRO",
+    VersionIcon = "shield-check", -- Icon Lucide
+    TagColor = Color3.fromRGB(200, 40, 40), -- Merah Catraz
     
     ShowIcon = true,
-    Icon = "rbxassetid://105921924721005",
+    Icon = "rbxassetid://105921924721005", -- Ganti dengan iconmu
     
-    SaveConfig = true, -- Mengaktifkan sistem penyimpanan
-    ConfigFolder = "Catraz_Configs",
+    -- [[ BACKGROUND IMAGE BIAR EFEK GLASS MAKIN KELIHATAN ]] --
+    ImageBackground = "rbxassetid://14246964899", -- Gambar Abstrak Gelap
+    ImageTransparency = 0.8, -- Transparansi gambar background
+    WindowTransparency = 0.1, -- Transparansi warna dasar window
     
-    WindowTransparency = 0.15,
-    ToggleIcon = "rbxassetid://105921924721005",
-    ToggleSize = 42,
+    SaveConfig = true,
+    ConfigFolder = "CatrazHub_Data",
     
     IntroEnabled = true,
-    IntroText = "Welcome Back, " .. LPlayer.DisplayName,
-    IntroIcon = "ghost"
+    IntroText = "Welcome, " .. LPlayer.DisplayName,
+    IntroIcon = "rbxassetid://105921924721005",
+    
+    ToggleIcon = "rbxassetid://105921924721005",
+    ToggleSize = 50
+}
+
+local Window = OrionLib:MakeWindow(WindowConfig)
+
+-- =================================================================
+-- TAB 1: HOME (CONTOH GLASS TAB)
+-- =================================================================
+-- Tab ini menggunakan fitur Glass = true dan Outline = false agar terlihat modern/flat
+local HomeTab = Window:MakeTab({
+    Name = "Home",
+    Icon = "home",
+    Glass = true,   -- Efek kaca pada tombol tab
+    Outline = false -- Hilangkan garis pinggir tombol tab
 })
 
--- =================================================================
--- TAB 1: DASHBOARD (Profil & Komunitas)
--- =================================================================
-local DashTab = Window:MakeTab({ Name = "Dashboard", Icon = "layout-dashboard" })
+-- Section Transparan (Glass Box)
+local UserSection = HomeTab:AddSection({
+    Name = "User Information",
+    Glass = true,   -- Kotak section jadi transparan
+    Outline = false -- Hilangkan garis pinggir section
+})
 
--- Advanced Paragraph: Profil User
-DashTab:AddParagraph({
-    Title = "User Profile",
-    Desc = "Status: Developer Access Granted\nEnjoy the premium Catraz experience.",
+UserSection:AddParagraph({
+    Title = "Subscription Status",
+    Desc = "Status: <font color='#42f563'>Active</font>\nTier: <b>Developer</b>\nUID: " .. LPlayer.UserId,
     Image = "rbxthumb://type=AvatarHeadShot&id=" .. LPlayer.UserId .. "&w=150&h=150",
     ImageSize = 45
 })
 
--- Advanced Paragraph: Live Discord API
-local CommDisplay = DashTab:AddParagraph({
-    Title = "Catraz Community Hub",
-    Desc = "🔄 Synchronizing with Satellite...",
-    Image = "rbxassetid://89256806750785",
-    ImageSize = 50,
-    Buttons = {
-        {
-            Title = "Copy Invitation",
-            Callback = function()
-                setclipboard("https://discord.gg/XVcWDFCYSu")
-                OrionLib:MakeNotification({ Name = "System", Content = "Link copied to clipboard!", Image = "link", Time = 3 })
-            end
-        }
-    }
-})
-
--- =================================================================
--- TAB 2: AUTOMATION (Fitur Utama Game)
--- =================================================================
-local MainTab = Window:MakeTab({ Name = "Automation", Icon = "zap" })
-
--- Section Foldable: Untuk menjaga UI tetap rapi
-local FarmSec = MainTab:AddSection({ Name = "Farming Settings", Folded = true })
-
--- Modern Switch Toggle
-FarmSec:AddToggle({
-    Name = "Auto Mine Ores",
-    Default = false,
-    Flag = "AutoMine_Switch", -- ID untuk Config
-    Save = true,
-    Callback = function(v) print("Auto Mine Status:", v) end
-})
-
--- Slider with Value Formatting
-MainTab:AddSlider({
-    Name = "Movement Speed",
-    Min = 16, Max = 350, Default = 16,
-    Increment = 1, ValueName = "SPS",
-    Color = Color3.fromRGB(200, 40, 40),
-    Flag = "WalkSpeed_Slider", Save = true,
-    Callback = function(v) LPlayer.Character.Humanoid.WalkSpeed = v end
-})
-
--- =================================================================
--- TAB 3: VISUALS (Dropdown & Colors)
--- =================================================================
-local VisualTab = Window:MakeTab({ Name = "Visuals", Icon = "palette" })
-
--- Searchable & Multi-Select Dropdown
-VisualTab:AddDropdown({
-    Name = "ESP Target Selection",
-    Options = {"Players", "NPCs", "Ores", "Chests", "Safezones"},
-    Default = {"Players"},
-    Multi = true,
-    Search = true, -- Mengaktifkan bar pencarian
-    Flag = "ESP_Dropdown", Save = true,
-    Callback = function(v) print("Selected Targets:", table.concat(v, ", ")) end
-})
-
-VisualTab:AddColorpicker({
-    Name = "Chams Glow Color",
-    Default = Color3.fromRGB(255, 40, 40),
-    Flag = "ChamsColor", Save = true,
-    Callback = function(v) print("Color Updated:", v) end
-})
-
--- =================================================================
--- TAB 4: SYSTEM (Configs & Settings)
--- =================================================================
-local SystemTab = Window:MakeTab({ Name = "System", Icon = "settings" })
-
--- Theme Selector
-SystemTab:AddDropdown({
-    Name = "Select UI Theme",
-    Default = "Default",
-    AllowNone = false, -- Pastikan ini FALSE agar tema tidak bisa dikosongkan
-    Options = {"Default", "Ocean", "Void", "Hackerman"}, -- Harus sama dengan tabel Themes di source.lua
-    Callback = function(Value)
-        if Value ~= "" and OrionLib.Themes[Value] then -- Tambahkan pengecekan manual
-            OrionLib.SelectedTheme = Value
-            OrionLib:SetTheme()
-        end
-    end     
-})
-SystemTab:AddBind({
-    Name = "Emergency Menu Toggle",
-    Default = Enum.KeyCode.RightControl,
-    Flag = "MenuKeybind", Save = true,
-    Callback = function() print("Menu Toggle Pressed") end
-})
-
--- [[ FITUR OTOMATIS: GENERATE CONFIG TAB ]] --
--- Membuat seluruh UI pengelolaan config (Save/Load/Cloud) secara instan
-Window:AddConfigTab({ Name = "Config Manager", Icon = "database" })
-
--- =================================================================
--- 🛰️ LIVE DATA UPDATER LOGIC
--- =================================================================
-task.spawn(function()
-    local InviteCode = "XVcWDFCYSu" -- Kode Genesis ID
-    while task.wait(60) do
-        local Success, Result = pcall(function()
-            local requestFunc = request or http_request or (http and http.request)
-            local res = requestFunc({ Url = "https://discord.com/api/v9/invites/"..InviteCode.."?with_counts=true", Method = "GET" })
-            return game:GetService("HttpService"):JSONDecode(res.Body)
-        end)
-
-        if Success and Result and Result.approximate_member_count then
-            local FormatK = function(n) return n >= 1000 and string.format("%.1fk", n/1000) or tostring(n) end
-            local Content = string.format(
-                '<font color="#4fffa6">● %s Online</font>  |  👥 %s Members\n\n' ..
-                '<font color="#b0b0b0">Latest updates, giveaways, and 24/7 support.</font>',
-                FormatK(Result.approximate_presence_count or 0), FormatK(Result.approximate_member_count)
-            )
-            CommDisplay:SetTitle("Catraz Community 🟢 Live")
-            CommDisplay:SetDesc(Content)
-        end
+UserSection:AddButton({
+    Name = "Copy Discord Link",
+    Icon = "link",
+    Outline = false, -- Tombol flat tanpa border
+    Callback = function()
+        setclipboard("https://discord.gg/CatrazHub")
+        OrionLib:MakeNotification({Name = "Success", Content = "Link copied!", Time = 3})
     end
-end)
+})
 
--- [[ 3. FINALIZE ]] --
-OrionLib:Init() -- Memuat konfigurasi 'Auto Load' jika tersedia
+-- =================================================================
+-- TAB 2: MAIN FEATURES (CONTOH STANDARD & MIXED)
+-- =================================================================
+local MainTab = Window:MakeTab({
+    Name = "Main",
+    Icon = "sword",
+    Glass = false, -- Tab biasa
+    Outline = true -- Pakai outline
+})
+
+-- Section dengan Outline tapi tanpa Glass (Solid)
+local FarmSec = MainTab:AddSection({
+    Name = "Auto Farm Settings",
+    Glass = false, 
+    Outline = true,
+    Folded = false
+})
+
+-- Contoh Toggle TANPA Outline (Menyatu dengan background)
+FarmSec:AddToggle({
+    Name = "Auto Attack",
+    Default = false,
+    Outline = false, -- Flat Style
+    Flag = "AutoAttack",
+    Save = true,
+    Callback = function(Value)
+        print("Auto Attack:", Value)
+    end
+})
+
+-- Contoh Dropdown Multi-Select
+FarmSec:AddDropdown({
+    Name = "Select Mobs",
+    Default = {},
+    Options = {"Goblin", "Orc", "Dragon", "Slime", "Wolf"},
+    Multi = true,
+    Search = true,
+    Outline = true, -- Tetap pakai outline biar tegas
+    Flag = "MobSelect",
+    Callback = function(Value)
+        print("Mobs:", table.concat(Value, ", "))
+    end
+})
+
+-- Section Kedua (Combat)
+local CombatSec = MainTab:AddSection({ Name = "Combat" })
+
+-- Slider tanpa Outline
+CombatSec:AddSlider({
+    Name = "Kill Aura Range",
+    Min = 0,
+    Max = 50,
+    Default = 20,
+    Increment = 1,
+    ValueName = "Studs",
+    Outline = false, -- Flat Slider
+    Flag = "KillAuraRange",
+    Callback = function(Value)
+        print("Range set to:", Value)
+    end
+})
+
+-- =================================================================
+-- TAB 3: VISUALS (CONTOH FULL GLASS UI)
+-- =================================================================
+local VisualTab = Window:MakeTab({
+    Name = "Visuals",
+    Icon = "eye",
+    Glass = true,
+    Outline = true
+})
+
+-- Section Glass dengan Outline (Kotak kaca bergaris)
+local ESPSec = VisualTab:AddSection({
+    Name = "ESP Configuration",
+    Glass = true,
+    Outline = true
+})
+
+ESPSec:AddToggle({
+    Name = "Enable ESP",
+    Default = false,
+    Outline = false,
+    Callback = function(Value) 
+        -- Logika ESP
+    end
+})
+
+ESPSec:AddColorpicker({
+    Name = "ESP Color",
+    Default = Color3.fromRGB(255, 0, 0),
+    Outline = true, -- Outline on biar kotak warnanya jelas
+    Callback = function(Value)
+        -- Ubah warna ESP
+    end
+})
+
+-- Textbox tanpa outline frame utama, tapi kotak input tetap ada (default logic)
+ESPSec:AddTextbox({
+    Name = "Custom ESP Name",
+    Default = "",
+    TextDisappear = false,
+    Outline = false, 
+    Callback = function(Value)
+        print("ESP Name:", Value)
+    end
+})
+
+-- =================================================================
+-- TAB 4: SETTINGS & CONFIGS
+-- =================================================================
+local SettingsTab = Window:MakeTab({
+    Name = "Settings",
+    Icon = "settings"
+})
+
+local SysSec = SettingsTab:AddSection({ Name = "System" })
+
+SysSec:AddBind({
+    Name = "Menu Toggle Key",
+    Default = Enum.KeyCode.RightControl,
+    Hold = false,
+    Outline = true,
+    Flag = "MenuBind",
+    Save = true,
+    Callback = function()
+        -- Sudah otomatis dihandle lib, tapi bisa tambah fungsi lain disini
+    end
+})
+
+SysSec:AddButton({
+    Name = "Unload Script",
+    Outline = true,
+    Callback = function()
+        OrionLib:Destroy()
+    end
+})
+
+-- [[ FITUR PRO: CONFIG MANAGER BAWAAN ]] --
+-- Ini akan membuat Tab baru khusus untuk save/load config
+Window:AddConfigTab({
+    Name = "Configs",
+    Icon = "save"
+})
+
+-- [[ INITIALIZE ]] --
+OrionLib:Init()
