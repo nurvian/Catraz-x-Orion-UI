@@ -1676,6 +1676,12 @@ function OrionLib:MakeWindow(WindowConfig)
 					ClipsDescendants = true
 				}), "Divider")
 
+				-- >>> TAMBAHKAN KODE INI TEPAT DI BAWAHNYA <<<
+				AddConnection(DropdownList:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+					-- Ini ngasih tau ScrollFrame buat manjangin area scroll sesuai jumlah opsi
+					DropdownContainer.CanvasSize = UDim2.new(0, 0, 0, DropdownList.AbsoluteContentSize.Y + 5)
+				end)
+
 				local Click = SetProps(MakeElement("Button"), { Size = UDim2.new(1, 0, 1, 0) })
 				
 				local DropdownFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
@@ -2281,7 +2287,7 @@ function OrionLib:MakeWindow(WindowConfig)
 					if not SectionCollapsed then
 						-- Tinggi Box = Tinggi Konten + Header + Padding Bawah
 						SectionFrame.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y + 40)
-						SectionFrame.Holder.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y)
+						SectionFrame.Holder.Size = UDim2.new(1, -10, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y)
 					end
 				end)
 
